@@ -3,7 +3,7 @@
 #include <reader_writer.h>
 #include <ui/menubar.h>
 #include "../external/imgui/imgui.h"
-#include "../external/IGFD/ImGuiFileDialog.h"
+#include "../external/ifd/ImFileDialog.h"
 #include <iostream>
 #include <GLFW/glfw3.h>
 
@@ -21,10 +21,7 @@ namespace Dental::UI {
       if (ImGui::BeginMenu(u8"File")) {        
         if (ImGui::MenuItem("Import", "CTRL+N")) {
           const char* filters = "support files (*.stl *.ply *.obj){.stl,.ply,.obj}";
-          ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".stl", ImVec4(1.0f, 1.0f, 0.0f, 0.9f));
-          ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".ply", ImVec4(1.0f, 1.0f, 0.0f, 0.9f));
-          ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".obj", ImVec4(1.0f, 1.0f, 0.0f, 0.9f));
-          IGFD::FileDialog::Instance()->OpenModal("ImportFileDialog", ICON_IGFD_FOLDER_OPEN "Import File", filters, "");
+          ifd::FileDialog::Instance().Open("ImportFileDialog", "Import File", filters);
         }
 
         ImGui::Separator();
@@ -49,16 +46,15 @@ namespace Dental::UI {
     ImGui::EndMainMenuBar();
 
     static std::string error_message;
-    if (IGFD::FileDialog::Instance()->Display("ImportFileDialog", ImGuiWindowFlags_NoCollapse, ImVec2(400, 300))) {
-      if (IGFD::FileDialog::Instance()->IsOk()) {
-        std::string file_name = ImGuiFileDialog::Instance()->GetFilePathName();
-        auto result = ReaderWriter::read(file_name);
+    if (ifd::FileDialog::Instance().IsDone("ImportFileDialog")) {
+      if (ifd::FileDialog::Instance().HasResult()) {
+        auto result = ReaderWriter::read(ifd::FileDialog::Instance().GetResult().string());
         auto geometry = std::get<0>(result);
         if (geometry) {
           // error_message = std::get<2>(result);
         }
       }
-      IGFD::FileDialog::Instance()->Close();
+      ifd::FileDialog::Instance().Close();
     }
   }
 }

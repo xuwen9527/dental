@@ -3,8 +3,7 @@
 #include "external/imgui/imgui.h"
 #include "external/imgui/imgui_impl_glfw.h"
 #include "external/imgui/imgui_impl_opengl3.h"
-#include "external/IGFD/ImGuiFileDialog.h"
-#include "external/IGFD/CustomFont.cpp"
+#include "external/ifd/ImFileDialog.h"
 #include <iostream>
 #include <fstream>
 #include <config.h>
@@ -20,7 +19,7 @@ namespace Dental {
     frame_buffer_ = std::make_shared<GLFrameTextureBuffer>();
     frame_buffer_->attachColor();
 
-    // uiviews_.emplace_back(std::make_shared<UI::MenuBar>(*this));
+    uiviews_.emplace_back(std::make_shared<UI::MenuBar>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Project>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Preview>(*this));
   }
@@ -30,6 +29,33 @@ namespace Dental {
   }
 
   void Engine::setupFonts() {
+    {
+      ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+        GLuint tex;
+
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_RGBA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return (void*)(size_t)tex;
+      };
+      ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+        GLuint texID = (GLuint)((uintptr_t)tex);
+        glDeleteTextures(1, &texID);
+      };
+      ifd::FileDialog::Instance().SetZoom(1.f);
+    }
+
+    glfwSetErrorCallback([](int error, const char* description) {
+      std::cout << "Glfw Error " << error << " " << description;
+    });
+
     {
       static std::string defaultFontPath = "msyh.ttc";
       static float defaultFontSize = 20.f;
@@ -42,12 +68,6 @@ namespace Dental {
       }
     }
 
-    {
-      static const ImWchar icons_ranges[] = { ICON_MIN_IGFD, ICON_MAX_IGFD, 0 };
-      ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-      ImGui::GetIO().Fonts->AddFontFromMemoryCompressedBase85TTF(FONT_ICON_BUFFER_NAME_IGFD, 15.0f, &icons_config, icons_ranges);
-
-    }
     // {
     //   static std::string fa_solid_file_name = "../fonts/fa-solid-900.ttf";
     //   static std::string fa_regular_file_name = "../fonts/fa-regular-400.ttf";
