@@ -1,0 +1,7 @@
+#ifndef __ZJ_CONFIG__
+#define __ZJ_CONFIG__
+
+#define IMAGES_DIR std::string("@assets_dir@/images/")
+#define FONTS_DIR std::string("@assets_dir@/fonts/")
+
+#endif
