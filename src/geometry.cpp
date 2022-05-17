@@ -7,12 +7,14 @@
 namespace Dental {
   Geometry::Geometry() :
     mv_(glm::identity<glm::mat4>()),
-    dirty_(false),
+    dirty_(true),
     vertex_array_(std::make_shared<Vec3Array>()),
     normal_array_(std::make_shared<Vec3Array>()),
     color_array_(std::make_shared<Vec4Array>()),
     texcoord_array_(std::make_shared<Vec2Array>()),
-    uuid_(createUUID()) {
+    uuid_(createUUID()),
+    dirty_bounding_(true),
+    render_technique_(std::make_shared<DefaultRenderTechnique>()) {
     vertex_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::POSITION));
     normal_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::NORMAL));
     color_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::COLOR));
@@ -33,6 +35,8 @@ namespace Dental {
       *color_array_ = *rhs.color_array_;
       *texcoord_array_ = *rhs.texcoord_array_;
 	    uuid_ = rhs.uuid_;
+      dirty_bounding_ = rhs.dirty_bounding_;
+      bounding_sphere_ = rhs.bounding_sphere_;
 
       decltype(primitive_sets_)().swap(primitive_sets_);
       for (const auto& primitive_set : rhs.primitive_sets_) {
@@ -44,6 +48,7 @@ namespace Dental {
         textures_.insert({ itr.first, itr.second->clone() });
       }
       dirty();
+      dirtyBounding();
     }
     return *this;
   }
@@ -60,7 +65,10 @@ namespace Dental {
       primitive_sets_ = std::move(rhs.primitive_sets_);
       textures_ = std::move(rhs.textures_);
 	    uuid_ = std::move(rhs.uuid_);
+      dirty_bounding_ = std::move(rhs.dirty_bounding_);
+      bounding_sphere_ = std::move(rhs.bounding_sphere_);
       dirty();
+      dirtyBounding();
     }
     return *this;
   }
@@ -264,7 +272,7 @@ namespace Dental {
 
   void Geometry::render(RenderInfo& info) {
     if (render_technique_) {
-      render_technique_->apply(info);
+      render_technique_->apply(info, *this);
     }
 
     if (dirty_) {
@@ -274,5 +282,44 @@ namespace Dental {
     }
 
     gl_objects_.render();
+  }
+
+  void Geometry::dirtyBounding() {
+    dirty_bounding_ = true;
+  }
+
+  void Geometry::computeBounding() {
+    if (!bounding_sphere_.valid()) {
+      dirty_bounding_ = true;
+    }
+
+    if (!dirty_bounding_) {
+      return;
+    }
+
+    dirty_bounding_ = false;
+
+    bounding_sphere_.init();
+
+    if (vertex_array_->empty()) {
+      return;
+    }
+
+    BoundingBox box;
+    box.expandBy(vertex_array_);
+
+    glm::vec4 min = mv_ * glm::vec4(box.min(), 1.f);
+    glm::vec4 max = mv_ * glm::vec4(box.max(), 1.f);
+
+    bounding_sphere_.expandBy(glm::vec3(min / min.w));
+    bounding_sphere_.expandBy(glm::vec3(max / max.w));
+  }
+
+  BoundingSphere &Geometry::boundingSphere() {
+    if (dirty_bounding_) {
+      computeBounding();
+      dirty_bounding_ = false;
+    }
+    return bounding_sphere_;
   }
 }

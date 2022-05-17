@@ -51,7 +51,10 @@ namespace Dental::UI {
         auto result = ReaderWriter::read(ifd::FileDialog::Instance().GetResult().string());
         auto geometry = std::get<0>(result);
         if (geometry) {
-          // error_message = std::get<2>(result);
+          engine_.scene()->addGeometry(geometry);
+          engine_.scene()->home();
+        } else {
+          std::cout << std::get<2>(result) << std::endl;
         }
       }
       ifd::FileDialog::Instance().Close();

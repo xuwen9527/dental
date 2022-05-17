@@ -6,8 +6,8 @@
 #include <string>
 #include <glm/mat4x4.hpp>
 #include <visitor.h>
-#include <bounding_box.h>
 #include <geometry.h>
+#include <bounding_sphere.h>
 
 namespace Dental {
   class Node;
@@ -63,6 +63,9 @@ namespace Dental {
     bool removeGeometry(const GeometryPtr& geometry);
     void clearGeometry();
 
+    void dirtyBounding();
+    BoundingSphere& boundingSphere();
+
     inline virtual void accept(Visitor& visitor);
 
     virtual void traverse(Visitor& visitor);
@@ -74,6 +77,9 @@ namespace Dental {
     glm::mat4 mv_;
   	std::string uuid_;
     std::vector<GeometryPtr> geometrys_;
+
+    BoundingSphere bounding_sphere_;
+    bool dirty_bounding_;
   };
 }
 #endif

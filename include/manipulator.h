@@ -1,151 +1,147 @@
-// #ifndef __MANIPULATOR_H__
-// #define __MANIPULATOR_H__
+#ifndef __MANIPULATOR_H__
+#define __MANIPULATOR_H__
 
-// #include <memory>
-// #include <vector>
-// #include "glm/ext.hpp"
-// #include "View.h"
-// #include "camera.h"
+#include <memory>
+#include <vector>
+#include "glm/ext.hpp"
+#include "camera.h"
 // #include "event.h"
-// #include "boundingSphere.h"
-// #include "render_info.h"
+#include "bounding_sphere.h"
+#include "render_info.h"
 
-// namespace Dental {
-//   class Manipulator {
-//   public:
-//     class Viewpoint {
-//     public:
-//       Viewpoint();
+namespace Dental {
+  class Manipulator {
+  public:
+    class Viewpoint {
+    public:
+      Viewpoint();
+      Viewpoint(const Viewpoint& viewpoint);
+      Viewpoint(glm::vec3& focal, float range, glm::vec3& eulerAngle);
+      Viewpoint(glm::vec3& focal, float range, glm::quat& quat);
 
-//       Viewpoint(const Viewpoint& viewpoint);
+      ~Viewpoint();
 
-//       Viewpoint(glm::vec3& focal, float range, glm::vec3& eulerAngle);
+      Viewpoint operator - (Viewpoint& other);
+      Viewpoint operator + (Viewpoint& other);
 
-//       Viewpoint(glm::vec3& focal, float range, glm::quat& quat);
+      bool valid();
 
-//       ~Viewpoint();
+      void slerp(float t, Viewpoint& to);
 
-//       Viewpoint operator - (Viewpoint& other);
-//       Viewpoint operator + (Viewpoint& other);
+      void name(std::string& name) { name_ = name; }
+      const std::string& name() const { return name_; }
 
-//       bool valid();
+      void focalPoint(glm::vec3& point) { focalPoint_ = point; }
+      const glm::vec3& focalPoint() const { return focalPoint_; }
 
-//       void slerp(float t, Viewpoint& to);
+      void eulerAngle(glm::vec3& eulerAngle);
+      glm::vec3 eulerAngle() const;
 
-//       void setName(std::string& name) { _name = name; }
-//       std::string& getName() { return _name; }
+      const glm::quat& quat() const { return quat_; }
+      const void quat(const glm::quat& quat) { quat_ = quat; }
 
-//       void setFocalPoint(glm::vec3& point) { _focalPoint = point; }
-//       glm::vec3& getFocalPoint() { return _focalPoint; }
+      void range(float range) { range_ = range; }
+      float range() const { return range_; }
 
-//       void setEulerAngle(glm::vec3& eulerAngle);
-//       glm::vec3 getEulerAngle();
+    protected:
+      std::string name_;
+      glm::vec3 focalPoint_;
+      glm::quat quat_;
+      float range_;
+    };
 
-//       glm::quat& getQuat() { return _quat; }
-//       void setQuat(const glm::quat& quat) { _quat = quat; }
+    using Viewpoints = std::vector<Viewpoint>;
 
-//       void setRange(float range) { _range = range; }
-//       float getRange() { return _range; }
+    Manipulator();
+    ~Manipulator();
 
-//     protected:
-//       std::string _name;
-//       glm::vec3 _focalPoint;
-//       glm::quat _quat;
-//       float _range;
-//     };
+    void camera(const CameraPtr& camera);
 
-//     using Viewpoints = std::vector<Viewpoint>;
+    bool valid() { return distance_ > 0.f; }
 
-//     Manipulator();
-//     ~Manipulator();
+    void center(const glm::vec3 &center);
+    const glm::vec3 &center() const;
 
-//     void setCamera(CameraPtr& camera);
+    void offset(const glm::vec3 &offset);
+    const glm::vec3& offset();
 
-//     bool valid() { return _distance > 0.f; }
+    void distance(float distance);
+    float distance();
 
-//     void setCenter(glm::vec3 &center);
-//     const glm::vec3 &getCenter();
+    void rotation(const glm::quat &rotation);
+    glm::quat &rotation();
 
-//     void setOffset(glm::vec3 &offset);
-//     const glm::vec3& getOffset();
+    void rotateSpeed(float speed);
+    float rotateSpeed();
 
-//     void setDistance(float distance);
-//     float getDistance();
+    void zoom(float scale);
+    // 绕axis旋转angle弧度, mv空间
+    void rotate(glm::vec3& axis, float angle);
+    //四元数旋转, mv空间
+    void rotate(glm::quat& quat);
+    // x,y,z三轴平移量, mv空间
+    void pan(float dx, float dy, float dz);
 
-//     void setRotation(glm::quat &rotation);
-//     glm::quat &getRotation();
+    void apply(RenderInfoPtr &renderInfo);
 
-//     void setRotateSpeed(float speed);
-//     float getRotateSpeed();
+    // void handleEvent(Event& event, View &view);
 
-//     void zoom(float scale);
-//     // 绕axis旋转angle弧度, mv空间
-//     void rotate(glm::vec3& axis, float angle);
-//     //四元数旋转, mv空间
-//     void rotate(glm::quat& quat);
-//     // x,y,z三轴平移量, mv空间
-//     void pan(float dx, float dy, float dz);
+    Viewpoint createViewpoint(BoundingSphere& sphere);
+    Viewpoint viewpoint();
+    void viewpoint(Viewpoint& viewpoint, float duration_s = 0.0);
 
-//     void apply(RenderInfoPtr &renderInfo);
+  private:
+    glm::mat4 matrix();
+    glm::mat4 inveseMatrix();
 
-//     void handleEvent(Event& event, View &view);
+    // bool mouseMove(Event& event, View &view);
+    // bool mousePress(Event& event, View &view);
+    // bool mouseRelease(Event& event, View &view);
+    // bool mouseScroll(Event& event, View &view);
+    // bool mouseMultiMove(Event &event, View &view);
+    // bool mouseMultiPress(Event& event, View &view);
+    // bool mouseMultiRelease(Event& event, View &view);
 
-//     Viewpoint createViewpoint(BoundingSphere& sphere);
-//     Viewpoint getViewpoint();
-//     void setViewpoint(Viewpoint& viewpoint, float duration_s = 0.0);
+    bool rotateTrackball(const glm::vec2& p0, const glm::vec2& p1);
 
-//   private:
-//     glm::mat4 getMatrix();
-//     glm::mat4 getInveseMatrix();
+    void fly(float time_s);
 
-//     bool mouseMove(Event& event, View &view);
-//     bool mousePress(Event& event, View &view);
-//     bool mouseRelease(Event& event, View &view);
-//     bool mouseScroll(Event& event, View &view);
-//     bool mouseMultiMove(Event &event, View &view);
-//     bool mouseMultiPress(Event& event, View &view);
-//     bool mouseMultiRelease(Event& event, View &view);
+    glm::vec2 last_point0_;
+    glm::vec2 last_point1_;
+    bool pointer_pressed_;
 
-//     bool rotateTrackball(const glm::vec2& p0, const glm::vec2& p1);
+    float distance_;
+    glm::vec3 center_;
+    glm::vec3 offset_; 
+    glm::quat rotation_;
 
-//     void fly(double time_s);
+    float trackballSize_;
+    float rotate_speed_;
 
-//     glm::vec2 _last_point0;
-//     glm::vec2 _last_point1;
-//     bool _pointer_pressed;
+    float wheelZoomFactor_;
+    float minimumDistance_;
+    float maximumDistance_;
 
-//     float _distance;
-//     glm::vec3 _center;
-//     glm::vec3 _offset;
-//     glm::quat _rotation;
+    //是否绕center旋转
+    bool rotate_center_;
 
-//     float _trackballSize;
-//     float _rotate_speed;
+    CameraWeakPtr camera_;
 
-//     float _wheelZoomFactor;
-//     float _minimumDistance;
-//     float _maximumDistance;
+    class FlightParams {
+    public:
+      Viewpoint start_viewpoint_;
+      Viewpoint end_viewpoint_;
+      glm::vec3 start_offset_;
+      float duration_s_;
+      double time_s_;
 
-//     //是否绕center旋转
-//     bool _rotate_center;
+      bool valid();
+      void reset();
+    };
 
-//     CameraWeakPtr _camera;
+    FlightParams flightParams_;
+  };
 
-//     class FlightParams {
-//     public:
-//       Viewpoint _start_viewpoint;
-//       Viewpoint _end_viewpoint;
-//       glm::vec3 _start_offset;
-//       float _duration_s;
-//       double _time_s;
-
-//       bool valid();
-//       void reset();
-//     };
-
-//     FlightParams _flightParams;
-//   };
-
-//   using ManipulatorPtr = std::shared_ptr<Manipulator>;
-// }
-// #endif
+  using ManipulatorPtr = std::shared_ptr<Manipulator>;
+}
+#endif

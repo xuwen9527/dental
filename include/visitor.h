@@ -4,6 +4,7 @@
 #include <memory>
 #include <viewport.h>
 #include <matrix_cascade.h>
+#include <bounding_sphere.h>
 
 namespace Dental {
   class Scene;
@@ -54,5 +55,18 @@ namespace Dental {
   };
 
   using VisitorPtr = std::shared_ptr<Visitor>;
+
+  class ComputeBoundingSphereVisitor : public Visitor {
+    public:
+      ComputeBoundingSphereVisitor();
+
+      virtual void apply(Geometry& geometry) override;
+
+      BoundingSphere& boundingSphere() { return boundingSphere_; }
+
+    protected:
+      BoundingSphere boundingSphere_;
+    };
+    using ComputeBoundingSphereVisitorPtr = std::shared_ptr<ComputeBoundingSphereVisitor>;
 }
 #endif

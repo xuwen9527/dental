@@ -48,4 +48,13 @@ namespace Dental {
     popViewport();
     popProjection();
   }
+
+  ComputeBoundingSphereVisitor::ComputeBoundingSphereVisitor() : Visitor() {
+    boundingSphere_.init();
+  }
+
+  void ComputeBoundingSphereVisitor::apply(Geometry& geometry) {
+    BoundingSphere &bound = geometry.boundingSphere();
+    if (bound.valid()) boundingSphere_.expandBy(bound);
+  }
 }

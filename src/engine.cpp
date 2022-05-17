@@ -15,9 +15,10 @@
 
 namespace Dental {
   Engine::Engine() :
-    window_(nullptr) {
-    frame_buffer_ = std::make_shared<GLFrameTextureBuffer>();
-    frame_buffer_->attachColor();
+    window_(nullptr),
+    scene_(std::make_shared<Scene>()),
+    manipulator_(std::make_shared<Manipulator>()) {
+    manipulator_->camera(std::dynamic_pointer_cast<Camera>(scene_));
 
     uiviews_.emplace_back(std::make_shared<UI::MenuBar>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Project>(*this));
@@ -107,10 +108,23 @@ namespace Dental {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     window_ = glfwCreateWindow(800, 600, "Dental", nullptr, nullptr);
+    
     if (!window_) {
       std::cout << "failed to create GLFW window" << std::endl;
       return;
     }
+
+    int width, height;
+    glfwGetWindowSize(window_, &width, &height);
+    scene_->resize(width, height);
+
+    glfwSetWindowUserPointer(window_, this);
+    glfwSetWindowSizeCallback(window_, [](GLFWwindow* window, int width, int height) {
+      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
+      if (engine) {
+        engine->scene()->resize(width, height);
+      }
+    });
 
     glfwMakeContextCurrent(window_);
 
@@ -173,6 +187,17 @@ namespace Dental {
     glfwTerminate();
   }
 
+  void Engine::home(float duration_s) {
+    scene_->dirtyBounding();
+
+    Manipulator::Viewpoint viewpoint = 
+      manipulator_->createViewpoint(scene_->boundingSphere());
+    if (viewpoint.valid()) {
+        manipulator_->viewpoint(viewpoint, duration_s);
+        // requestRedraw();
+    }
+  }
+
   void Engine::frame() {
     int width, height;
     glfwGetFramebufferSize(window_, &width, &height);
@@ -186,8 +211,14 @@ namespace Dental {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    if (!manipulator_->valid()) {
+      home();
+    }
+
     RenderInfoPtr render_info = std::make_shared<RenderInfo>();
+    manipulator_->apply(render_info);
+
     RenderVisitor visitor(render_info);
-    scene_.accept(visitor);
+    scene_->accept(visitor);
   }
 }

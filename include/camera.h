@@ -30,6 +30,7 @@ namespace Dental {
     }
 
     bool splitPerspective(float& fovy, float& aspect, float& near, float& far) const;
+    bool splitFrustum(float& left, float& right, float& bottom, float& top, float& near, float& far) const;
     void perspectiveViewport(int x, int y, int width, int height, float fovy, float near, float far);
     void perspectiveViewport(int x, int y, int width, int height, float aspect, float fovy, float near, float far);
 
@@ -52,8 +53,6 @@ namespace Dental {
 
     void makePerspective(float fovy, float aspect, float near, float far);
 
-    bool splitFrustum(float& left, float& right, float& bottom, float& top, float& near, float& far) const;
-
     void orthoViewport(int x, int y, int width, int height);
     void perspectiveViewport(int x, int y, int width, int height);
 
@@ -63,5 +62,6 @@ namespace Dental {
   };
 
   using CameraPtr = std::shared_ptr<Camera>;
+  using CameraWeakPtr = std::weak_ptr<Camera>;
 }
 #endif

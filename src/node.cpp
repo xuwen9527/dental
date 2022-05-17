@@ -7,7 +7,8 @@
 namespace Dental {
   Node::Node() :
     mv_(glm::identity<glm::mat4>()),
-    uuid_(createUUID()) {
+    uuid_(createUUID()),
+    dirty_bounding_(true) {
 
   }
 
@@ -21,6 +22,9 @@ namespace Dental {
       mv_ = rhs.mv_;
 	    uuid_ = rhs.uuid_;
       geometrys_ = rhs.geometrys_;
+      dirty_bounding_ = rhs.dirty_bounding_;
+      bounding_sphere_ = rhs.bounding_sphere_;
+      dirtyBounding();
     }
     return *this;
   }
@@ -31,6 +35,9 @@ namespace Dental {
       mv_ = std::move(rhs.mv_);
 	    uuid_ = std::move(rhs.uuid_);
       geometrys_ = std::move(rhs.geometrys_);
+      dirty_bounding_ = std::move(rhs.dirty_bounding_);
+      bounding_sphere_ = std::move(rhs.bounding_sphere_);
+      dirtyBounding();
     }
     return *this;
   }
@@ -155,6 +162,27 @@ namespace Dental {
       geometry->parent(NodePtr());
     }
     decltype(geometrys_)().swap(geometrys_);
+  }
+
+  BoundingSphere &Node::boundingSphere() {
+    if (dirty_bounding_) {
+      bounding_sphere_.init();
+
+      ComputeBoundingSphereVisitor visitor;
+      accept(visitor);
+
+      BoundingSphere& bounding_sphere = visitor.boundingSphere();
+      if (bounding_sphere.valid()) {
+        bounding_sphere_ = bounding_sphere;
+      }
+
+      dirty_bounding_ = false;
+    }
+    return bounding_sphere_;
+  }
+
+  void Node::dirtyBounding() {
+    dirty_bounding_ = true;
   }
 
   void Node::accept(Visitor& visitor) {

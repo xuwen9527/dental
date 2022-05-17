@@ -59,8 +59,8 @@ namespace Dental {
     inline const glm::mat4& mv() const { return mv_; }
 
     inline void uuid(const std::string& id) { uuid_ = id; }
-    inline const std::string& uuid() const { return uuid_; }							   
-															
+    inline const std::string& uuid() const { return uuid_; }
+
     glm::vec3 origin() const;
     void origin(glm::vec3);
 
@@ -103,6 +103,9 @@ namespace Dental {
     void clearTexture();
 
     void dirty();
+    void dirtyBounding();
+
+    BoundingSphere &boundingSphere();
 
     void renderTechnique(const RenderTechniquePtr& technique);
     RenderTechniquePtr& renderTechnique();
@@ -111,6 +114,9 @@ namespace Dental {
     virtual BoundingBox boundingBox() const;
 
     virtual void render(RenderInfo& info);
+
+  protected:  
+    void computeBounding();
 
   private:
     void dirtyGLObjects();
@@ -134,6 +140,9 @@ namespace Dental {
     RenderTechniquePtr render_technique_;
 
     GLObjectPtrs gl_objects_;
+    
+    BoundingSphere bounding_sphere_;
+    bool dirty_bounding_;
   };
 }
 #endif

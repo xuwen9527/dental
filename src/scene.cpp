@@ -2,7 +2,6 @@
 
 namespace Dental {
   Scene::Scene() : Camera() {
-    perspectiveViewport(0, 0, 400, 300);
   }
 
   Scene::~Scene() {

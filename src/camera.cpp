@@ -6,9 +6,8 @@
 
 namespace Dental {
   Camera::Camera() :
-    Node(),
-    projection_(glm::identity<glm::mat4>()) {
-
+    Node() {
+    perspectiveViewport(0, 0, 400, 300);
   }
 
   Camera::~Camera() {
@@ -140,7 +139,7 @@ namespace Dental {
   }
 
   void Camera::perspectiveViewport(int x, int y, int width, int height) {
-    perspectiveViewport(x, y, width, height, 90.f, 8.0f, 1000.0f);
+    perspectiveViewport(x, y, width, height, 30.f, 1.0f, 10000.0f);
   }
 
   void Camera::perspectiveViewport(int x, int y, int width, int height, float fovy, float near, float far) {

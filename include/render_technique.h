@@ -9,13 +9,13 @@ namespace Dental {
   class RenderInfo;
   class Geometry;
 
-  using GeometryPtr = std::shared_ptr<Geometry>;
-
-#define Mate_RenderTechnique(class) \
-  virtual const std::string& className() const { static std::string name = #class; return name; }
-
-#define Mate_RenderTechniqueEX(class) \
-  virtual const std::string& className() const override { static std::string name = #class; return name; }
+#define Mate_RenderTechnique(class)                      \
+  virtual const std::string& className() const override  \
+  { static std::string name = #class; return name; }     \
+  class& operator = (class&&) noexcept = delete;         \
+  class& operator = (const class&) = delete;             \
+  class(const class&) = delete;                          \
+  class(class&&) noexcept = delete;
 
   class RenderTechnique {
   public:
@@ -25,7 +25,7 @@ namespace Dental {
     RenderTechnique(const std::string& name);
     virtual ~RenderTechnique();
 
-    Mate_RenderTechnique(RenderTechnique)
+    virtual const std::string& className() const { static std::string name = "RenderTechnique"; return name; }
 
     RenderTechnique& operator = (RenderTechnique&&) noexcept = delete;
     RenderTechnique& operator = (const RenderTechnique&) = delete;
@@ -43,7 +43,7 @@ namespace Dental {
 
     const UniformMap& uniforms() const { return uniforms_; }
 
-    virtual void apply(RenderInfo& info);
+    virtual void apply(RenderInfo& info, const Geometry& geometry);
 
   protected:
     void addUniform(const UniformPtr& uniform);
@@ -66,61 +66,15 @@ namespace Dental {
 
   using RenderTechniquePtr = std::shared_ptr<RenderTechnique>;
 
-  class MonoColorRenderTechnique : public RenderTechnique {
+  class DefaultRenderTechnique : public RenderTechnique {
   public:
-    MonoColorRenderTechnique();
+    DefaultRenderTechnique();
 
-    Mate_RenderTechniqueEX(MonoColorRenderTechnique)
+    Mate_RenderTechnique(DefaultRenderTechnique)
 
-    MonoColorRenderTechnique& operator = (MonoColorRenderTechnique&&) noexcept = delete;
-    MonoColorRenderTechnique& operator = (const MonoColorRenderTechnique&) = delete;
-    MonoColorRenderTechnique(const MonoColorRenderTechnique&) = delete;
-    MonoColorRenderTechnique(MonoColorRenderTechnique&&) noexcept = delete;
-
-    const glm::vec4& color() const;
-    void color(const glm::vec4& vec);
+    void apply(RenderInfo& info, const Geometry& geometry) override;
   };
 
-  using MonoColorRenderTechniquePtr = std::shared_ptr<MonoColorRenderTechnique>;
-
-  class TextureRenderTechnique : public RenderTechnique {
-  public:
-    TextureRenderTechnique();
-
-    Mate_RenderTechniqueEX(TextureRenderTechnique)
-
-    TextureRenderTechnique& operator = (TextureRenderTechnique&&) noexcept = delete;
-    TextureRenderTechnique& operator = (const TextureRenderTechnique&) = delete;
-    TextureRenderTechnique(const TextureRenderTechnique&) = delete;
-    TextureRenderTechnique(TextureRenderTechnique&&) noexcept = delete;
-
-    const int& texture() const;
-    void texture(const int& value);
-  };
-
-  using TextureRenderTechniquePtr = std::shared_ptr<TextureRenderTechnique>;
-
-  class TextRenderTechnique : public RenderTechnique {
-  public:
-    TextRenderTechnique(bool sdf = true);
-
-    Mate_RenderTechniqueEX(TextRenderTechnique)
-
-    TextRenderTechnique& operator = (TextRenderTechnique&&) noexcept = delete;
-    TextRenderTechnique& operator = (const TextRenderTechnique&) = delete;
-    TextRenderTechnique(const TextRenderTechnique&) = delete;
-    TextRenderTechnique(TextRenderTechnique&&) noexcept = delete;
-
-    const glm::vec4& color() const;
-    void color(const glm::vec4& vec);
-
-    const int& texture() const;
-    void texture(const int& value);
-
-  private:
-    bool sdf_;
-  };
-
-  using TextRenderTechniquePtr = std::shared_ptr<TextRenderTechnique>;
+  using DefaultRenderTechniquePtr = std::shared_ptr<DefaultRenderTechnique>;
 }
 #endif

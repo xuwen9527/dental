@@ -4,8 +4,7 @@
 #include <memory>
 #include <ui/view.h>
 #include <scene.h>
-#include <gl_frame_buffer.h>
-
+#include <manipulator.h>
 
 struct GLFWwindow;
 
@@ -27,6 +26,12 @@ namespace Dental {
 
     void frame();
 
+    void home(float duration_s = 0.0f);
+
+    ScenePtr& scene() {
+      return scene_;
+    }
+
   protected:
     void setup();
     void setupFonts();
@@ -34,8 +39,9 @@ namespace Dental {
   private:
     GLFWwindow* window_;
 
-    GLFrameBufferPtr frame_buffer_;
-    Scene scene_;
+    ScenePtr scene_;
+    
+    ManipulatorPtr manipulator_;
 
     UI::ViewPtrs uiviews_;
   };

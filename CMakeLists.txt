@@ -30,7 +30,8 @@ configure_file(config.in config.h)
 set(ROOT "C:/msys64/mingw64/include")
 
 include_directories(${ROOT})
-include_directories(thirdparty thirdparty/vcglib)
+include_directories(thirdparty)
+include_directories(thirdparty/vcglib)
 include_directories(include)
 include_directories(build)
 

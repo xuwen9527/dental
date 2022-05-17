@@ -72,9 +72,9 @@ namespace Dental {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t_);
 
       if (check_mipmaped(min_filter_) || check_mipmaped(mag_filter_)) {
-        // float mMaxAnisotropy;
-        // glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &mMaxAnisotropy);
-        // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, mMaxAnisotropy);
+        float mMaxAnisotropy;
+        //glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &mMaxAnisotropy);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, mMaxAnisotropy);
       }
 
       texture_parameters_dirty_ = false;
