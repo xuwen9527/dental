@@ -16,10 +16,7 @@
 namespace Dental {
   Engine::Engine() :
     window_(nullptr),
-    scene_(std::make_shared<Scene>()),
-    manipulator_(std::make_shared<Manipulator>()) {
-    manipulator_->camera(std::dynamic_pointer_cast<Camera>(scene_));
-
+    viewer_(std::make_shared<Viewer>()) {
     uiviews_.emplace_back(std::make_shared<UI::MenuBar>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Project>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Preview>(*this));
@@ -103,32 +100,19 @@ namespace Dental {
     glfwWindowHint(GLFW_MAXIMIZED, true);
     glfwWindowHint(GLFW_DECORATED, true);
     glfwWindowHint(GLFW_RESIZABLE, true);
-    glfwWindowHint(GLFW_REFRESH_RATE, 15);
+    glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     window_ = glfwCreateWindow(800, 600, "Dental", nullptr, nullptr);
-    
     if (!window_) {
       std::cout << "failed to create GLFW window" << std::endl;
       return;
     }
 
-    int width, height;
-    glfwGetWindowSize(window_, &width, &height);
-    scene_->resize(width, height);
-
-    glfwSetWindowUserPointer(window_, this);
-    glfwSetWindowSizeCallback(window_, [](GLFWwindow* window, int width, int height) {
-      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
-      if (engine) {
-        engine->scene()->resize(width, height);
-      }
-    });
-
     glfwMakeContextCurrent(window_);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) {
       std::cout << "failed to load glad" << std::endl;
     }
 
@@ -153,12 +137,67 @@ namespace Dental {
     setupFonts();
 
     ImGui_ImplGlfw_InitForOpenGL(window_, true);
-    ImGui_ImplOpenGL3_Init("#version 100");
+    ImGui_ImplOpenGL3_Init();
+
+    int width, height;
+    glfwGetWindowSize(window_, &width, &height);
+    viewer_->scene()->resize(width, height);
+
+    glfwSetWindowUserPointer(window_, this);
+    glfwSetWindowSizeCallback(window_, [](GLFWwindow* window, int width, int height) {
+      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
+      engine->viewer()->scene()->resize(width, height);
+    });
+
+    glfwSetWindowRefreshCallback(window_, [](GLFWwindow* window) {
+      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
+      engine->viewer()->events().redraw();
+    });
 
     glfwSetKeyCallback(window_, ImGui_ImplGlfw_KeyCallback);
     glfwSetCharCallback(window_, ImGui_ImplGlfw_CharCallback);
-    glfwSetMouseButtonCallback(window_, ImGui_ImplGlfw_MouseButtonCallback);
-    glfwSetScrollCallback(window_, ImGui_ImplGlfw_ScrollCallback);
+
+    glfwSetMouseButtonCallback(window_, [](GLFWwindow* window, int button, int action, int mods){
+      ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+
+      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
+
+      Event::Type type;
+      switch (action) {
+      case GLFW_PRESS:
+        type = Event::POINTER_PRESS; break;
+      case GLFW_RELEASE:
+        type = Event::POINTER_RELEASE; break;
+      default:
+        return;
+      }
+
+      Event::Button btn;
+      switch (btn) {
+      case GLFW_MOUSE_BUTTON_LEFT:
+        btn = Event::LEFT_BUTTON; break;
+      case GLFW_MOUSE_BUTTON_MIDDLE:
+        btn = Event::MIDDLE_BUTTON; break;
+      case GLFW_MOUSE_BUTTON_RIGHT:
+        btn = Event::RIGHT_BUTTON; break;
+      default:
+        btn = Event::NO_BUTTON; break;
+      }
+
+      double x, y;
+      glfwGetCursorPos(window, &x, &y);
+
+      Event event(type, btn, x, y);
+      engine->viewer()->events().push(event);
+    });
+
+    glfwSetScrollCallback(window_, [](GLFWwindow* window, double xoffset, double yoffset){
+      ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+
+      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
+      Event event(yoffset > 0.0 ? Event::POINTER_SCROLL_UP : Event::POINTER_SCROLL_DOWN);
+      engine->viewer()->events().push(event);
+    });
   }
 
   void Engine::run() {
@@ -171,7 +210,13 @@ namespace Dental {
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
 
-      frame();
+      double x, y;
+      glfwGetCursorPos(window_, &x, &y);
+      Event event(Event::POINTER_MOVE, Event::LEFT_BUTTON, x, y);
+
+      viewer()->events().push(event);
+
+      viewer_->frame();
 
       for (auto& uiview : uiviews_) {
         uiview->render();
@@ -185,40 +230,5 @@ namespace Dental {
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(window_);
     glfwTerminate();
-  }
-
-  void Engine::home(float duration_s) {
-    scene_->dirtyBounding();
-
-    Manipulator::Viewpoint viewpoint = 
-      manipulator_->createViewpoint(scene_->boundingSphere());
-    if (viewpoint.valid()) {
-        manipulator_->viewpoint(viewpoint, duration_s);
-        // requestRedraw();
-    }
-  }
-
-  void Engine::frame() {
-    int width, height;
-    glfwGetFramebufferSize(window_, &width, &height);
-
-    glViewport(0, 0, width, height);
-    glClearColor(0.45f, 0.55f, 0.60f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    if (!manipulator_->valid()) {
-      home();
-    }
-
-    RenderInfoPtr render_info = std::make_shared<RenderInfo>();
-    manipulator_->apply(render_info);
-
-    RenderVisitor visitor(render_info);
-    scene_->accept(visitor);
   }
 }

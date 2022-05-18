@@ -3,11 +3,11 @@
 
 #include <memory>
 #include <vector>
-#include "glm/ext.hpp"
-#include "camera.h"
-// #include "event.h"
-#include "bounding_sphere.h"
-#include "render_info.h"
+#include <glm/ext.hpp>
+#include <camera.h>
+#include <event.h>
+#include <bounding_sphere.h>
+#include <render_info.h>
 
 namespace Dental {
   class Manipulator {
@@ -84,7 +84,7 @@ namespace Dental {
 
     void apply(RenderInfoPtr &renderInfo);
 
-    // void handleEvent(Event& event, View &view);
+    bool handleEvent(Event& event);
 
     Viewpoint createViewpoint(BoundingSphere& sphere);
     Viewpoint viewpoint();
@@ -94,13 +94,13 @@ namespace Dental {
     glm::mat4 matrix();
     glm::mat4 inveseMatrix();
 
-    // bool mouseMove(Event& event, View &view);
-    // bool mousePress(Event& event, View &view);
-    // bool mouseRelease(Event& event, View &view);
-    // bool mouseScroll(Event& event, View &view);
-    // bool mouseMultiMove(Event &event, View &view);
-    // bool mouseMultiPress(Event& event, View &view);
-    // bool mouseMultiRelease(Event& event, View &view);
+    bool mouseMove(Event& event);
+    bool mousePress(Event& event);
+    bool mouseRelease(Event& event);
+    bool mouseScroll(Event& event);
+    bool mouseMultiMove(Event &event);
+    bool mouseMultiPress(Event& event);
+    bool mouseMultiRelease(Event& event);
 
     bool rotateTrackball(const glm::vec2& p0, const glm::vec2& p1);
 

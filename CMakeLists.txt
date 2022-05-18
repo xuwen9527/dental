@@ -40,6 +40,7 @@ file(GLOB_RECURSE SRCS src/*.cpp src/*.c src/*.h)
 add_executable(${PROJECT_NAME} ${INCS} ${SRCS})
 
 target_link_libraries(${PROJECT_NAME} glfw3 GLESv2)
+#target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_ES2)
 
 build_command(BUILD_COMMAND_LINE CONFIGURATION ${CMAKE_BUILD_TYPE} TARGET ALL_BUILD)
 message(STATUS "Using compiler ${CMAKE_CXX_COMPILER}")

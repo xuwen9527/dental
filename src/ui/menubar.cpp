@@ -1,11 +1,11 @@
-#include <engine.h>
+#include <iostream>
 #include <filesystem>
+#include <engine.h>
 #include <reader_writer.h>
 #include <ui/menubar.h>
+#include <GLFW/glfw3.h>
 #include "../external/imgui/imgui.h"
 #include "../external/ifd/ImFileDialog.h"
-#include <iostream>
-#include <GLFW/glfw3.h>
 
 namespace Dental::UI {
   MenuBar::MenuBar(Engine& engine, const std::string& name, bool visible) :
@@ -51,8 +51,8 @@ namespace Dental::UI {
         auto result = ReaderWriter::read(ifd::FileDialog::Instance().GetResult().string());
         auto geometry = std::get<0>(result);
         if (geometry) {
-          engine_.scene()->addGeometry(geometry);
-          engine_.scene()->home();
+          engine_.viewer()->scene()->addGeometry(geometry);
+          engine_.viewer()->home();
         } else {
           std::cout << std::get<2>(result) << std::endl;
         }

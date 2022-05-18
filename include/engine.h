@@ -3,8 +3,7 @@
 
 #include <memory>
 #include <ui/view.h>
-#include <scene.h>
-#include <manipulator.h>
+#include <viewer.h>
 
 struct GLFWwindow;
 
@@ -24,13 +23,7 @@ namespace Dental {
 
     void run();
 
-    void frame();
-
-    void home(float duration_s = 0.0f);
-
-    ScenePtr& scene() {
-      return scene_;
-    }
+    ViewerPtr& viewer() { return viewer_; }
 
   protected:
     void setup();
@@ -39,11 +32,9 @@ namespace Dental {
   private:
     GLFWwindow* window_;
 
-    ScenePtr scene_;
-    
-    ManipulatorPtr manipulator_;
-
     UI::ViewPtrs uiviews_;
+
+    ViewerPtr viewer_;
   };
 
   using EnginePtr = std::shared_ptr<Engine>;

@@ -149,15 +149,15 @@ namespace Dental {
     rotation_(glm::identity<glm::quat>()) {
     distance_ = -1.0f;
 
-    wheelZoomFactor_ = 0.1f;
+    wheelZoomFactor_ = 0.2f;
     minimumDistance_ = 0.001f;
     maximumDistance_ = 100.f;
 
     trackballSize_ = 0.8f;
 
-    rotate_speed_ = 3.f;
+    rotate_speed_ = 2.f;
 
-    rotate_center_ = false;
+    rotate_center_ = true;
 
     pointer_pressed_ = false;
   }
@@ -295,198 +295,193 @@ namespace Dental {
     }
   }
 
-  // void Manipulator::handleEvent(Event &event, View &view) {
-  //   if (event.getHandled()) {
-  //     return;
-  //   }
+  bool Manipulator::handleEvent(Event &event) {
+    if (event.handled()) {
+      return false;
+    }
 
-  //   bool handled = false;
-  //   switch (event.getType()) {
-  //     case Event::POINTER_PRESS:
-  //       handled = mousePress(event, view);
-  //       break;
-  //     case Event::POINTER_MOVE:
-  //       flightParams_.reset();
-  //       handled = mouseMove(event, view);
-  //       break;
-  //     case Event::POINTER_RELEASE:
-  //       handled = mouseRelease(event, view);
-  //       break;
-  //     case Event::MULTI_POINTER_PRESS:
-  //       handled = mouseMultiPress(event, view);
-  //       break;
-  //     case Event::MULTI_POINTER_MOVE:
-  //       flightParams_.reset();
-  //       handled = mouseMultiMove(event, view);
-  //       break;
-  //     case Event::MULTI_POINTER_RELEASE:
-  //       handled = mouseMultiRelease(event, view);
-  //       break;
-  //     case Event::POINTER_SCROLL_UP:
-  //     case Event::POINTER_SCROLL_DOWN:
-  //     case Event::POINTER_SCROLL_LEFT:
-  //     case Event::POINTER_SCROLL_RIGHT:
-  //       handled = mouseScroll(event, view);
-  //       break;
-  //     default:
-  //       break;
-  //   }
+    bool handled = false;
+    switch (event.type()) {
+      case Event::POINTER_PRESS:
+        handled = mousePress(event);
+        break;
+      case Event::POINTER_MOVE:
+        flightParams_.reset();
+        handled = mouseMove(event);
+        break;
+      case Event::POINTER_RELEASE:
+        handled = mouseRelease(event);
+        break;
+      case Event::MULTI_POINTER_PRESS:
+        handled = mouseMultiPress(event);
+        break;
+      case Event::MULTI_POINTER_MOVE:
+        flightParams_.reset();
+        handled = mouseMultiMove(event);
+        break;
+      case Event::MULTI_POINTER_RELEASE:
+        handled = mouseMultiRelease(event);
+        break;
+      case Event::POINTER_SCROLL_UP:
+      case Event::POINTER_SCROLL_DOWN:
+      case Event::POINTER_SCROLL_LEFT:
+      case Event::POINTER_SCROLL_RIGHT:
+        handled = mouseScroll(event);
+        break;
+      default:
+        break;
+    }
 
-  //   event.setHandled(handled);
-  // }
+    event.handled(handled);
+    return handled;
+  }
 
-  // bool Manipulator::mousePress(Event &event, View &view) {
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   pointer_pressed_ = true;
-  //   return false;
-  // }
+  bool Manipulator::mousePress(Event &event) {
+    last_point0_ = event.firstProjectPoint();
+    pointer_pressed_ = true;
+    return false;
+  }
 
-  // bool Manipulator::mouseMove(Event &event, View &view) {
-  //   if (!pointer_pressed_) {
-  //     return false;
-  //   }
+  bool Manipulator::mouseMove(Event &event) {
+    if (!pointer_pressed_) {
+      return false;
+    }
 
-  //   if (event.getButton() == Event::LEFT_BUTTON) {
-  //     bool flag = rotateTrackball(event.getFirstProjectPoint(), last_point0_);
-  //     last_point0_ = event.getFirstProjectPoint();
-  //     if (flag) view.needRedraw();
-  //     return flag;
-  //   }
+    if (event.button() == Event::LEFT_BUTTON) {
+      bool flag = rotateTrackball(event.firstProjectPoint(), last_point0_);
+      last_point0_ = event.firstProjectPoint();
+      return flag;
+    }
 
-  //   //平移
-  //   if (event.getButton() == Event::MIDDLE_BUTTON) {
-  //     CameraPtr safe_camera = camera_.lock();
-  //     if (!safe_camera) {
-  //       return false;
-  //     }
+    //平移
+    if (event.button() == Event::MIDDLE_BUTTON) {
+      CameraPtr safe_camera = camera_.lock();
+      if (!safe_camera) {
+        return false;
+      }
 
-  //     float right, left, top, bottom, near, far;
-  //     if (safe_camera->frustum(left, right, bottom, top, near, far)) {
-  //       glm::vec2 point0 = last_point0_;
-  //       last_point0_ = event.getFirstProjectPoint();
+      float right, left, top, bottom, near, far;
+      if (safe_camera->splitFrustum(left, right, bottom, top, near, far)) {
+        glm::vec2 point0 = last_point0_;
+        last_point0_ = event.firstProjectPoint();
 
-  //       glm::vec2 e = last_point0_ - point0;
+        glm::vec2 e = last_point0_ - point0;
 
-  //       //计算到投影空间,逆归一化
-  //       float fovy = atanf(top / near) - atanf(bottom / near);
-  //       e = e / near * distance_ * tanf(fovy / 2.f);
-  //       e.x *= (right - left) * 2.f;
-  //       e.y *= (top - bottom) * 2.f;
+        //计算到投影空间,逆归一化
+        float fovy = atanf(top / near) - atanf(bottom / near);
+        e = e / near * distance_ * tanf(fovy / 2.f);
+        e.x *= (right - left) * 2.f;
+        e.y *= (top - bottom) * 2.f;
 
-  //       pan(e.x, e.y, 0.f);
+        pan(e.x, e.y, 0.f);
 
-  //       view.needRedraw();
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }
+        return true;
+      }
+    }
+    return false;
+  }
 
-  // bool Manipulator::mouseRelease(Event &event, View &view) {
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   pointer_pressed_ = false;
-  //   return false;
-  // }
+  bool Manipulator::mouseRelease(Event &event) {
+    last_point0_ = event.firstProjectPoint();
+    pointer_pressed_ = false;
+    return false;
+  }
 
-  // bool Manipulator::mouseMultiMove(Event &event, View &view) {
-  //   if (!pointer_pressed_) {
-  //     return false;
-  //   }
+  bool Manipulator::mouseMultiMove(Event &event) {
+    if (!pointer_pressed_) {
+      return false;
+    }
 
-  //   glm::vec2 point0 = last_point0_;
-  //   glm::vec2 point1 = last_point1_;
+    glm::vec2 point0 = last_point0_;
+    glm::vec2 point1 = last_point1_;
 
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   last_point1_ = event.getSecondProjectPoint();
+    last_point0_ = event.firstProjectPoint();
+    last_point1_ = event.secondProjectPoint();
 
-  //   CameraPtr safe_camera = camera_.lock();
-  //   if (!safe_camera) {
-  //     return false;
-  //   }
+    CameraPtr safe_camera = camera_.lock();
+    if (!safe_camera) {
+      return false;
+    }
 
-  //   glm::vec2 e0 = last_point0_ - point0;
-  //   glm::vec2 e1 = last_point1_ - point1;
+    glm::vec2 e0 = last_point0_ - point0;
+    glm::vec2 e1 = last_point1_ - point1;
 
-  //   glm::vec2 we0, we1;
-  //   safe_camera->getViewport().length_projectToWindow(e0, we0);
-  //   safe_camera->getViewport().length_projectToWindow(e1, we1);
+    glm::vec2 we0, we1;
+    safe_camera->viewport().lengthProjectToWindow(e0, we0);
+    safe_camera->viewport().lengthProjectToWindow(e1, we1);
 
-  //   float dist_e0 = glm::length(we0);
-  //   float dist_e1 = glm::length(we1);
-  //   if ((dist_e0 <= 1.f) && (dist_e1 <= 1.f)) {
-  //     return false;
-  //   }
+    float dist_e0 = glm::length(we0);
+    float dist_e1 = glm::length(we1);
+    if ((dist_e0 <= 1.f) && (dist_e1 <= 1.f)) {
+      return false;
+    }
 
-  //   float max_dist = dist_e0;
-  //   float min_dist = dist_e1;
+    float max_dist = dist_e0;
+    float min_dist = dist_e1;
 
-  //   if (dist_e0 < dist_e1) {
-  //     min_dist = dist_e0;
-  //     max_dist = dist_e1;
-  //   }
+    if (dist_e0 < dist_e1) {
+      min_dist = dist_e0;
+      max_dist = dist_e1;
+    }
 
-  //   bool ret = false;
-  //   if ((min_dist < 2.f) && (max_dist > min_dist * 1.5f)) {//旋转
-  //     glm::vec2 mid = (last_point0_ + last_point1_) / 2.f;
-  //     if (dist_e0 > dist_e1) {
-  //       ret = rotateTrackball(last_point0_ - mid, point0 - mid);
-  //     } else {
-  //       ret = rotateTrackball(last_point1_ - mid, point1 - mid);
-  //     }
-  //   } else {
-  //     float prev_dt = glm::distance(point0, point1);
-  //     float last_dt = glm::distance(last_point0_, last_point1_);
-  //     float dt = last_dt - prev_dt;
-  //     if (fabsf(dt) > 0.01f) {//缩放
-  //       zoom(dt > 0.f ? -wheelZoomFactor_ : wheelZoomFactor_);
-  //       ret = true;
-  //     }
+    bool ret = false;
+    if ((min_dist < 2.f) && (max_dist > min_dist * 1.5f)) {//旋转
+      glm::vec2 mid = (last_point0_ + last_point1_) / 2.f;
+      if (dist_e0 > dist_e1) {
+        ret = rotateTrackball(last_point0_ - mid, point0 - mid);
+      } else {
+        ret = rotateTrackball(last_point1_ - mid, point1 - mid);
+      }
+    } else {
+      float prev_dt = glm::distance(point0, point1);
+      float last_dt = glm::distance(last_point0_, last_point1_);
+      float dt = last_dt - prev_dt;
+      if (fabsf(dt) > 0.01f) {//缩放
+        zoom(dt > 0.f ? -wheelZoomFactor_ : wheelZoomFactor_);
+        ret = true;
+      }
 
-  //     //平移
-  //     float right, left, top, bottom, near, far;
-  //     if (safe_camera->getFrustum(left, right, bottom, top, near, far)) {
-  //       glm::vec2 e = (e0 + e1) / 2.f;
-  //       //计算到投影空间,逆归一化
-  //       float fovy = atanf(top / near) - atanf(bottom / near);
-  //       e = e / near * distance_ * tanf(fovy / 2.f);
-  //       e.x *= (right - left) * 2.f;
-  //       e.y *= (top - bottom) * 2.f;
+      //平移
+      float right, left, top, bottom, near, far;
+      if (safe_camera->splitFrustum(left, right, bottom, top, near, far)) {
+        glm::vec2 e = (e0 + e1) / 2.f;
+        //计算到投影空间,逆归一化
+        float fovy = atanf(top / near) - atanf(bottom / near);
+        e = e / near * distance_ * tanf(fovy / 2.f);
+        e.x *= (right - left) * 2.f;
+        e.y *= (top - bottom) * 2.f;
 
-  //       pan(e.x, e.y, 0.f);
+        pan(e.x, e.y, 0.f);
 
-  //       ret = true;
-  //     }
-  //   }
+        ret = true;
+      }
+    }
 
-  //   if (ret) {
-  //     view.needRedraw();
-  //   }
-  //   return ret;
-  // }
+    return ret;
+  }
 
-  // bool Manipulator::mouseScroll(Event &event, View &view) {
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   last_point1_ = event.getSecondProjectPoint();
-  //   zoom((event.getType() == Event::POINTER_SCROLL_UP || event.getType() == Event::POINTER_SCROLL_LEFT)
-  //     ? -wheelZoomFactor_ : wheelZoomFactor_);
+  bool Manipulator::mouseScroll(Event &event) {
+    last_point0_ = event.firstProjectPoint();
+    last_point1_ = event.secondProjectPoint();
+    zoom((event.type() == Event::POINTER_SCROLL_UP || event.type() == Event::POINTER_SCROLL_LEFT)
+      ? -wheelZoomFactor_ : wheelZoomFactor_);
 
-  //   view.needRedraw();
-  //   return true;
-  // }
+    return true;
+  }
 
-  // bool Manipulator::mouseMultiPress(Event &event, View &view) {
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   last_point1_ = event.getSecondProjectPoint();
-  //   pointer_pressed_ = true;
-  //   return false;
-  // }
+  bool Manipulator::mouseMultiPress(Event &event) {
+    last_point0_ = event.firstProjectPoint();
+    last_point1_ = event.secondProjectPoint();
+    pointer_pressed_ = true;
+    return false;
+  }
 
-  // bool Manipulator::mouseMultiRelease(Event &event, View &view) {
-  //   last_point0_ = event.getFirstProjectPoint();
-  //   last_point1_ = event.getSecondProjectPoint();
-  //   pointer_pressed_ = false;
-  //   return false;
-  // }
+  bool Manipulator::mouseMultiRelease(Event &event) {
+    last_point0_ = event.firstProjectPoint();
+    last_point1_ = event.secondProjectPoint();
+    pointer_pressed_ = false;
+    return false;
+  }
 
   Manipulator::Viewpoint Manipulator::createViewpoint(BoundingSphere &sphere) {
     if (sphere.valid()) {
