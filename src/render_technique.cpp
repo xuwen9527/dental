@@ -117,7 +117,7 @@ const vec3 eyePos        = vec3(0.0, 0.0, 0.0);
 const vec3 lightPos      = vec3(0.0, 0.0, 100.0);
 const vec4 cessnaColor   = vec4(1.0, 1.0, 1.0, 1.0);
 const vec4 lightAmbient  = vec4(0.2, 0.2, 0.2, 1.0);
-const vec4 lightDiffuse  = vec4(0.4, 0.4, 0.4, 1.0);
+const vec4 lightDiffuse  = vec4(0.5, 0.5, 0.5, 1.0);
 const vec4 lightSpecular = vec4(0.2, 0.2, 0.2, 1.0);
 void DirectionalLight(in vec3 normal, in vec3 ecPos,
   inout vec4 ambient, inout vec4 diffuse, inout vec4 specular) {

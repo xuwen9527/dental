@@ -62,6 +62,5 @@ namespace Dental {
   };
 
   using CameraPtr = std::shared_ptr<Camera>;
-  using CameraWeakPtr = std::weak_ptr<Camera>;
 }
 #endif

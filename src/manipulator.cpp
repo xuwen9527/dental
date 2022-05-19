@@ -155,9 +155,9 @@ namespace Dental {
 
     trackballSize_ = 0.8f;
 
-    rotate_speed_ = 2.f;
+    rotate_speed_ = 3.f;
 
-    rotate_center_ = true;
+    rotate_center_ = false;
 
     pointer_pressed_ = false;
   }
@@ -283,22 +283,28 @@ namespace Dental {
     //glm::vec3 eye = center + glm::vec3(0.f, 0.f, sphere.radius() * 4.5f);
     //camera.getMV() = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     if (valid()) {
-      CameraPtr camera = camera_.lock();
-      if (camera) {
+      if (camera_) {
         if (flightParams_.valid()) {
           fly(Timer::instance().time_s());
           // renderInfo->needRedraw();
         }
-        camera->mv(matrix());
-        renderInfo->mvp(camera->mv(), camera->projection());
+        camera_->mv(matrix());
+        renderInfo->mvp(camera_->mv(), camera_->projection());
       }
     }
   }
 
   bool Manipulator::handleEvent(Event &event) {
+    if (!camera_) {
+      return false;
+    }
+
     if (event.handled()) {
       return false;
     }
+
+    camera_->viewport().windowToProject(event.firstProjectPoint(), event.firstPoint());
+    camera_->viewport().windowToProject(event.secondProjectPoint(), event.secondPoint());
 
     bool handled = false;
     switch (event.type()) {
@@ -355,13 +361,12 @@ namespace Dental {
 
     //平移
     if (event.button() == Event::MIDDLE_BUTTON) {
-      CameraPtr safe_camera = camera_.lock();
-      if (!safe_camera) {
+      if (!camera_) {
         return false;
       }
 
       float right, left, top, bottom, near, far;
-      if (safe_camera->splitFrustum(left, right, bottom, top, near, far)) {
+      if (camera_->splitFrustum(left, right, bottom, top, near, far)) {
         glm::vec2 point0 = last_point0_;
         last_point0_ = event.firstProjectPoint();
 
@@ -398,8 +403,7 @@ namespace Dental {
     last_point0_ = event.firstProjectPoint();
     last_point1_ = event.secondProjectPoint();
 
-    CameraPtr safe_camera = camera_.lock();
-    if (!safe_camera) {
+    if (!camera_) {
       return false;
     }
 
@@ -407,8 +411,8 @@ namespace Dental {
     glm::vec2 e1 = last_point1_ - point1;
 
     glm::vec2 we0, we1;
-    safe_camera->viewport().lengthProjectToWindow(e0, we0);
-    safe_camera->viewport().lengthProjectToWindow(e1, we1);
+    camera_->viewport().lengthProjectToWindow(e0, we0);
+    camera_->viewport().lengthProjectToWindow(e1, we1);
 
     float dist_e0 = glm::length(we0);
     float dist_e1 = glm::length(we1);
@@ -443,7 +447,7 @@ namespace Dental {
 
       //平移
       float right, left, top, bottom, near, far;
-      if (safe_camera->splitFrustum(left, right, bottom, top, near, far)) {
+      if (camera_->splitFrustum(left, right, bottom, top, near, far)) {
         glm::vec2 e = (e0 + e1) / 2.f;
         //计算到投影空间,逆归一化
         float fovy = atanf(top / near) - atanf(bottom / near);
@@ -485,12 +489,11 @@ namespace Dental {
 
   Manipulator::Viewpoint Manipulator::createViewpoint(BoundingSphere &sphere) {
     if (sphere.valid()) {
-      CameraPtr camera = camera_.lock();
-      if (camera) {
+      if (camera_) {
         float dist = sphere.radius();
 
         float left, right, bottom, top, zNear, zFar;
-        camera->splitFrustum(left, right, bottom, top, zNear, zFar);
+        camera_->splitFrustum(left, right, bottom, top, zNear, zFar);
 
         double vertical2 = fabs(right - left) / zNear / 2.0;
         double horizontal2 = fabs(top - bottom) / zNear / 2.0;

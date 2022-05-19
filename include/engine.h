@@ -29,6 +29,8 @@ namespace Dental {
     void setup();
     void setupFonts();
 
+    void fireEvent();
+
   private:
     GLFWwindow* window_;
 

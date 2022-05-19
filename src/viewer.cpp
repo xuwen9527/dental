@@ -5,7 +5,8 @@
 namespace Dental {
   Viewer::Viewer() :
     scene_(std::make_shared<Scene>()),
-    manipulator_(std::make_shared<Manipulator>()) {
+    manipulator_(std::make_shared<Manipulator>()),
+    move_event_(Event::POINTER_MOVE, Event::LEFT_BUTTON, 0.f, 0.f) {
     manipulator_->camera(std::dynamic_pointer_cast<Camera>(scene_));
   }
 
@@ -20,7 +21,6 @@ namespace Dental {
       manipulator_->createViewpoint(scene_->boundingSphere());
     if (viewpoint.valid()) {
         manipulator_->viewpoint(viewpoint, duration_s);
-        events_.redraw();
     }
   }
 
@@ -36,12 +36,8 @@ namespace Dental {
       Event event;
       events_.pop(event);
 
-      if (event.type() == Event::RENDER) {
-        // render(render_info);
-      } else if (event.type() & Event::POINTER) {
-        if (handleEvent(event)) {
-          // render(render_info);
-        }
+      if (event.type() & Event::POINTER) {
+        handleEvent(event);
       }
     }
 
@@ -64,9 +60,6 @@ namespace Dental {
   }
 
   bool Viewer::handleEvent(Event &event) {
-    scene_->viewport().windowToProject(event.firstProjectPoint(), event.firstPoint());
-    scene_->viewport().windowToProject(event.secondProjectPoint(), event.secondPoint());
-
     return manipulator_->handleEvent(event);
   }
 }

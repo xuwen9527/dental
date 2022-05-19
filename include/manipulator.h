@@ -125,7 +125,7 @@ namespace Dental {
     //是否绕center旋转
     bool rotate_center_;
 
-    CameraWeakPtr camera_;
+    CameraPtr camera_;
 
     class FlightParams {
     public:

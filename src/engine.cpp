@@ -128,7 +128,7 @@ namespace Dental {
     style.FrameBorderSize = 1;
     style.FrameRounding = 4;
 
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     // io.ConfigDockingAlwaysTabBar = true;
@@ -156,41 +156,8 @@ namespace Dental {
 
     glfwSetKeyCallback(window_, ImGui_ImplGlfw_KeyCallback);
     glfwSetCharCallback(window_, ImGui_ImplGlfw_CharCallback);
-
-    glfwSetMouseButtonCallback(window_, [](GLFWwindow* window, int button, int action, int mods){
-      ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
-
-      Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
-
-      Event::Type type;
-      switch (action) {
-      case GLFW_PRESS:
-        type = Event::POINTER_PRESS; break;
-      case GLFW_RELEASE:
-        type = Event::POINTER_RELEASE; break;
-      default:
-        return;
-      }
-
-      Event::Button btn;
-      switch (btn) {
-      case GLFW_MOUSE_BUTTON_LEFT:
-        btn = Event::LEFT_BUTTON; break;
-      case GLFW_MOUSE_BUTTON_MIDDLE:
-        btn = Event::MIDDLE_BUTTON; break;
-      case GLFW_MOUSE_BUTTON_RIGHT:
-        btn = Event::RIGHT_BUTTON; break;
-      default:
-        btn = Event::NO_BUTTON; break;
-      }
-
-      double x, y;
-      glfwGetCursorPos(window, &x, &y);
-
-      Event event(type, btn, x, y);
-      engine->viewer()->events().push(event);
-    });
-
+    glfwSetMouseButtonCallback(window_, ImGui_ImplGlfw_MouseButtonCallback);
+   
     glfwSetScrollCallback(window_, [](GLFWwindow* window, double xoffset, double yoffset){
       ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
@@ -198,6 +165,45 @@ namespace Dental {
       Event event(yoffset > 0.0 ? Event::POINTER_SCROLL_UP : Event::POINTER_SCROLL_DOWN);
       engine->viewer()->events().push(event);
     });
+  }
+
+  void Engine::fireEvent() {
+    Event event;
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonLeft)) {
+      event.type(Event::POINTER_MOVE);
+      event.button(Event::LEFT_BUTTON);
+    } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonRight)) {
+      event.type(Event::POINTER_MOVE);
+      event.button(Event::RIGHT_BUTTON);
+    } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonMiddle)) {
+      event.type(Event::POINTER_MOVE);
+      event.button(Event::MIDDLE_BUTTON);
+    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonLeft)) {
+      event.type(Event::POINTER_PRESS);
+      event.button(Event::LEFT_BUTTON);
+    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonRight)) {
+      event.type(Event::POINTER_PRESS);
+      event.button(Event::RIGHT_BUTTON);
+    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonMiddle)) {
+      event.type(Event::POINTER_PRESS);
+      event.button(Event::MIDDLE_BUTTON);
+    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonLeft)) {
+      event.type(Event::POINTER_RELEASE);
+      event.button(Event::LEFT_BUTTON);
+    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonRight)) {
+      event.type(Event::POINTER_RELEASE);
+      event.button(Event::RIGHT_BUTTON);
+    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonMiddle)) {
+      event.type(Event::POINTER_RELEASE);
+      event.button(Event::MIDDLE_BUTTON);
+    }
+
+    if (event.type() & Event::POINTER) {
+      event.firstPoint(io.MousePos.x, io.MousePos.y);
+      viewer_->events().push(event);
+    }
   }
 
   void Engine::run() {
@@ -210,11 +216,11 @@ namespace Dental {
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
 
-      double x, y;
-      glfwGetCursorPos(window_, &x, &y);
-      Event event(Event::POINTER_MOVE, Event::LEFT_BUTTON, x, y);
-
-      viewer()->events().push(event);
+      fireEvent();
+    //   if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonLeft)) {
+    //   std::cout << "IsMouseDragging" << std::endl;
+      
+    // } 
 
       viewer_->frame();
 

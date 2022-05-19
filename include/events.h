@@ -3,7 +3,6 @@
 
 #include <queue>
 #include <memory>
-#include <mutex>
 #include <condition_variable>
 #include <event.h>
 
@@ -28,8 +27,6 @@ namespace Dental {
 
   private:
     std::queue<Event> events_;
-
-    std::mutex mutex_;
     std::condition_variable cond_;
   };
 

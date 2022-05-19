@@ -23,7 +23,11 @@ namespace Dental {
 
     ScenePtr& scene() { return scene_; }
 
+    ManipulatorPtr& manipulator() { return manipulator_; }
+
     Events& events() { return events_; }
+
+    Event& moveEvent() { return move_event_; }
 
   protected:
 
@@ -36,6 +40,8 @@ namespace Dental {
     ManipulatorPtr manipulator_;
 
     Events events_;
+
+    Event move_event_;
   };
 
   using ViewerPtr = std::shared_ptr<Viewer>;
