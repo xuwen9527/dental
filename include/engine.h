@@ -29,7 +29,7 @@ namespace Dental {
     void setup();
     void setupFonts();
 
-    void fireEvent();
+    void render();
 
   private:
     GLFWwindow* window_;

@@ -19,7 +19,7 @@ namespace Dental {
 
     void frame();
 
-    void home(float duration_s = 0.0f);
+    void home(float duration_s = 0.0f, const glm::quat& quat = glm::identity<glm::quat>(), float zoom = 1.f);
 
     ScenePtr& scene() { return scene_; }
 

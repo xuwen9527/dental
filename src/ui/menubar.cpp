@@ -36,7 +36,7 @@ namespace Dental::UI {
         auto& uiviews = engine_.uiviews();
         for (auto& uiview : uiviews) {
           if (ImGui::MenuItem(uiview->Name.c_str(), nullptr, &uiview->Visible)) {
-
+            
           }
         }
 

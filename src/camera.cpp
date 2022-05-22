@@ -60,8 +60,7 @@ namespace Dental {
       float half_width = viewport_.width() / 2.f;
       float distance = half_height / std::tan(glm::radians(fovy / 2.f));
       origin({ 0.f, 0.f, -distance });
-    }
-    else {
+    } else {
       origin({ 0.f , 0.f, 0.f });
     }
   }

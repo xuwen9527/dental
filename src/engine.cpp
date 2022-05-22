@@ -9,6 +9,7 @@
 #include <config.h>
 #include <engine.h>
 #include <ui/menubar.h>
+#include <ui/undercut.h>
 #include <ui/project.h>
 #include <ui/preview.h>
 #include <render_visitor.h>
@@ -18,7 +19,7 @@ namespace Dental {
     window_(nullptr),
     viewer_(std::make_shared<Viewer>()) {
     uiviews_.emplace_back(std::make_shared<UI::MenuBar>(*this));
-    // uiviews_.emplace_back(std::make_shared<UI::Project>(*this));
+    uiviews_.emplace_back(std::make_shared<UI::UnderCut>(*this));
     // uiviews_.emplace_back(std::make_shared<UI::Preview>(*this));
   }
 
@@ -167,7 +168,7 @@ namespace Dental {
     });
   }
 
-  void Engine::fireEvent() {
+  void Engine::render() {
     Event event;
 
     ImGuiIO& io = ImGui::GetIO();
@@ -204,6 +205,8 @@ namespace Dental {
       event.firstPoint(io.MousePos.x, io.MousePos.y);
       viewer_->events().push(event);
     }
+
+    viewer_->frame();
   }
 
   void Engine::run() {
@@ -216,17 +219,18 @@ namespace Dental {
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
 
-      fireEvent();
-    //   if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonLeft)) {
-    //   std::cout << "IsMouseDragging" << std::endl;
-      
-    // } 
-
-      viewer_->frame();
+      glClearColor(0.45f, 0.55f, 0.60f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glEnable(GL_CULL_FACE);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
       for (auto& uiview : uiviews_) {
         uiview->render();
       }
+
+      render();
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

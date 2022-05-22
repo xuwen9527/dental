@@ -3,6 +3,7 @@
 
 namespace Dental {
   RenderInfo::RenderInfo() : 
+    mv_(glm::identity<glm::mat4>()),
     projection_(glm::identity<glm::mat4>()) {
   }
 

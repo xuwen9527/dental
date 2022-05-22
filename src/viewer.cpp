@@ -14,12 +14,14 @@ namespace Dental {
 
   }
 
-  void Viewer::home(float duration_s) {
+  void Viewer::home(float duration_s, const glm::quat& quat, float zoom) {
     scene_->dirtyBounding();
 
     Manipulator::Viewpoint viewpoint = 
       manipulator_->createViewpoint(scene_->boundingSphere());
     if (viewpoint.valid()) {
+        viewpoint.quat(quat);
+        viewpoint.range(viewpoint.range() * zoom);
         manipulator_->viewpoint(viewpoint, duration_s);
     }
   }
@@ -45,16 +47,6 @@ namespace Dental {
   }
 
   void Viewer::render(RenderInfoPtr& render_info) {
-    scene_->viewport().apply();
-
-    glClearColor(0.45f, 0.55f, 0.60f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     RenderVisitor visitor(render_info);
     scene_->accept(visitor);
   }
