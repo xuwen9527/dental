@@ -3284,6 +3284,10 @@ enum ImGuiKeyModFlags_ { ImGuiKeyModFlags_None = ImGuiModFlags_None, ImGuiKeyMod
 
 #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
+namespace ImGui
+{
+    bool HasEvent();
+}
 //-----------------------------------------------------------------------------
 
 #if defined(__clang__)

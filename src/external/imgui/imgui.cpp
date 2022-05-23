@@ -18842,6 +18842,12 @@ void ImGui::UpdateDebugToolStackQueries() {}
 
 #endif // #ifndef IMGUI_DISABLE_METRICS_WINDOW
 
+namespace ImGui {
+    bool HasEvent() {
+        ImGuiContext& g = *GImGui;
+        return g.InputEventsQueue.Size > 0;
+    }
+}
 //-----------------------------------------------------------------------------
 
 // Include imgui_user.inl at the end of imgui.cpp to access private data/functions that aren't exposed.
