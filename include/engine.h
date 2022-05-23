@@ -31,6 +31,8 @@ namespace Dental {
 
     void render();
 
+    bool needRedraw();
+
   private:
     GLFWwindow* window_;
 

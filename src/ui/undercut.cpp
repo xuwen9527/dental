@@ -23,6 +23,11 @@ namespace Dental::UI {
       return;
     }
 
+    if (ImGui::Begin(Name.c_str(), &Visible)) {
+
+    }
+    ImGui::End();
+
     if (!geometry_) {
       geometry(engine_.viewer()->scene()->geometry(0));
     }

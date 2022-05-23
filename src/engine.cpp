@@ -169,44 +169,66 @@ namespace Dental {
   }
 
   void Engine::render() {
-    Event event;
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
 
-    ImGuiIO& io = ImGui::GetIO();
-    if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonLeft)) {
-      event.type(Event::POINTER_MOVE);
-      event.button(Event::LEFT_BUTTON);
-    } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonRight)) {
-      event.type(Event::POINTER_MOVE);
-      event.button(Event::RIGHT_BUTTON);
-    } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonMiddle)) {
-      event.type(Event::POINTER_MOVE);
-      event.button(Event::MIDDLE_BUTTON);
-    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonLeft)) {
-      event.type(Event::POINTER_PRESS);
-      event.button(Event::LEFT_BUTTON);
-    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonRight)) {
-      event.type(Event::POINTER_PRESS);
-      event.button(Event::RIGHT_BUTTON);
-    } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonMiddle)) {
-      event.type(Event::POINTER_PRESS);
-      event.button(Event::MIDDLE_BUTTON);
-    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonLeft)) {
-      event.type(Event::POINTER_RELEASE);
-      event.button(Event::LEFT_BUTTON);
-    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonRight)) {
-      event.type(Event::POINTER_RELEASE);
-      event.button(Event::RIGHT_BUTTON);
-    } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonMiddle)) {
-      event.type(Event::POINTER_RELEASE);
-      event.button(Event::MIDDLE_BUTTON);
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBringToFrontOnFocus
+      | ImGuiWindowFlags_NoNavFocus
+      | ImGuiWindowFlags_NoDocking
+      | ImGuiWindowFlags_NoTitleBar
+      | ImGuiWindowFlags_NoCollapse
+      | ImGuiWindowFlags_NoResize
+      | ImGuiWindowFlags_NoMove
+      | ImGuiWindowFlags_NoBackground
+      | ImGuiWindowFlags_NoSavedSettings
+      | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    if (ImGui::Begin("##frame", 0, window_flags)) {
+      if (ImGui::IsItemActive()) {
+        Event event;
+        ImGuiIO& io = ImGui::GetIO();
+        if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonLeft)) {
+          event.type(Event::POINTER_MOVE);
+          event.button(Event::LEFT_BUTTON);
+        } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonRight)) {
+          event.type(Event::POINTER_MOVE);
+          event.button(Event::RIGHT_BUTTON);
+        } else if (ImGui::IsMouseDragging(ImGuiPopupFlags_MouseButtonMiddle)) {
+          event.type(Event::POINTER_MOVE);
+          event.button(Event::MIDDLE_BUTTON);
+        } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonLeft)) {
+          event.type(Event::POINTER_PRESS);
+          event.button(Event::LEFT_BUTTON);
+        } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonRight)) {
+          event.type(Event::POINTER_PRESS);
+          event.button(Event::RIGHT_BUTTON);
+        } else if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonMiddle)) {
+          event.type(Event::POINTER_PRESS);
+          event.button(Event::MIDDLE_BUTTON);
+        } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonLeft)) {
+          event.type(Event::POINTER_RELEASE);
+          event.button(Event::LEFT_BUTTON);
+        } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonRight)) {
+          event.type(Event::POINTER_RELEASE);
+          event.button(Event::RIGHT_BUTTON);
+        } else if (ImGui::IsMouseReleased(ImGuiPopupFlags_MouseButtonMiddle)) {
+          event.type(Event::POINTER_RELEASE);
+          event.button(Event::MIDDLE_BUTTON);
+        }
+
+        if (event.type() & Event::POINTER) {
+          event.firstPoint(io.MousePos.x, io.MousePos.y);
+          viewer_->events().push(event);
+        }
+      }
+      viewer_->frame();
     }
+    ImGui::End();
+  }
 
-    if (event.type() & Event::POINTER) {
-      event.firstPoint(io.MousePos.x, io.MousePos.y);
-      viewer_->events().push(event);
-    }
-
-    viewer_->frame();
+  bool Engine::needRedraw() {
+    return ImGui::HasEvent() || ImGui::IsItemToggledOpen() || !viewer_->events().empty();
   }
 
   void Engine::run() {
@@ -215,7 +237,7 @@ namespace Dental {
     while (!glfwWindowShouldClose(window_)) {
       glfwPollEvents();
 
-      if (ImGui::HasEvent()) {
+      if (needRedraw()) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -227,11 +249,11 @@ namespace Dental {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        render();
+
         for (auto& uiview : uiviews_) {
           uiview->render();
         }
-
-        render();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
