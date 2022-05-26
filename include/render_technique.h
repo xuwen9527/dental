@@ -4,10 +4,23 @@
 #include <memory>
 #include <program.h>
 #include <render_info.h>
+#include <gl_frame_buffer.h>
 
 namespace Dental {
   class RenderInfo;
   class Geometry;
+
+  class ProgramPool : public std::unordered_map<std::string, ProgramPtr> {
+  public:
+    static ProgramPool& instance();
+    ProgramPtr getOrAddProgram(
+      const std::string& class_name,
+      const std::string& vertex_source,
+      const std::string& fragment_source);
+
+  protected:
+    ProgramPool();
+  };
 
 #define Mate_RenderTechnique(class)                      \
   virtual const std::string& className() const override  \
@@ -20,7 +33,6 @@ namespace Dental {
   class RenderTechnique {
   public:
     using UniformMap = std::unordered_map<UniformPtr, int>;
-    using ProgramPool = std::unordered_map<std::string, ProgramPtr>;
 
     RenderTechnique(const std::string& name);
     virtual ~RenderTechnique();
@@ -43,17 +55,12 @@ namespace Dental {
 
     const UniformMap& uniforms() const { return uniforms_; }
 
-    virtual void apply(RenderInfo& info, const Geometry& geometry);
+    virtual void apply(RenderInfo& info, Geometry& geometry);
 
   protected:
     void addUniform(const UniformPtr& uniform);
     void removeUniform(const std::string& name);
     void clearUniform();
-
-    static ProgramPtr getOrAddProgram(
-      const std::string& class_name,
-      const std::string& vertex_source,
-      const std::string& fragment_source);
 
   protected:
     std::string name_;
@@ -61,7 +68,6 @@ namespace Dental {
     UniformMap uniforms_;
 
     ProgramPtr program_;
-    static ProgramPool program_pool_;
   };
 
   using RenderTechniquePtr = std::shared_ptr<RenderTechnique>;
@@ -72,9 +78,31 @@ namespace Dental {
 
     Mate_RenderTechnique(DefaultRenderTechnique)
 
-    void apply(RenderInfo& info, const Geometry& geometry) override;
+    void apply(RenderInfo& info, Geometry& geometry) override;
   };
 
   using DefaultRenderTechniquePtr = std::shared_ptr<DefaultRenderTechnique>;
+
+  class ShadowRenderTechnique : public RenderTechnique {
+  public:
+    ShadowRenderTechnique();
+
+    Mate_RenderTechnique(ShadowRenderTechnique)
+
+    void apply(RenderInfo& info, Geometry& geometry) override;
+
+  private:
+    void renderDepth(RenderInfo& info, Geometry& geometry);
+    void renderShadow(RenderInfo& info, Geometry& geometry);
+
+    GLFrameTextureBuffer frambuffer;
+
+    UniformPtr uniform_tex_;
+    UniformPtr uniform_mvp_;
+
+    int size_;
+  };
+
+  using ShadowRenderTechniquePtr = std::shared_ptr<ShadowRenderTechnique>;
 }
 #endif

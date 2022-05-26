@@ -14,7 +14,7 @@ namespace Dental {
     texcoord_array_(std::make_shared<Vec2Array>()),
     uuid_(createUUID()),
     dirty_bounding_(true),
-    render_technique_(std::make_shared<DefaultRenderTechnique>()) {
+    render_technique_(std::make_shared<ShadowRenderTechnique>()) {
     vertex_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::POSITION));
     normal_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::NORMAL));
     color_array_->bind(static_cast<std::underlying_type<Attrib>::type>(Attrib::COLOR));
@@ -270,11 +270,7 @@ namespace Dental {
     return box;
   }
 
-  void Geometry::render(RenderInfo& info) {
-    if (render_technique_) {
-      render_technique_->apply(info, *this);
-    }
-
+  void Geometry::render() {
     if (dirty_) {
       dirtyGLObjects();
       setupGLObjects();

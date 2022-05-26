@@ -41,7 +41,10 @@ namespace Dental {
   void RenderVisitor::apply(Geometry& geometry) {
     pushMV(geometry.mv());
     render_info_->mv(mvs_.top());
-    geometry.render(*render_info_);
+    auto render_technique = geometry.renderTechnique();
+    if (render_technique) {
+      render_technique->apply(*render_info_, geometry);
+    }
     popMV();
   }
 }

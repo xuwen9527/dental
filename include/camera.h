@@ -44,6 +44,9 @@ namespace Dental {
 
     bool orthogonal() const;
 
+    void orthoViewport(int x, int y, int width, int height);
+    void perspectiveViewport(int x, int y, int width, int height);
+
   protected:
     void makeViewport(int x, int y, int width, int height);
 
@@ -52,9 +55,6 @@ namespace Dental {
     void makeOrtho(float left, float right, float bottom, float top);
 
     void makePerspective(float fovy, float aspect, float near, float far);
-
-    void orthoViewport(int x, int y, int width, int height);
-    void perspectiveViewport(int x, int y, int width, int height);
 
     glm::mat4 projection_;
 

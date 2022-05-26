@@ -7,7 +7,6 @@
 #include <array.h>
 #include <primitive_set.h>
 #include <texture.h>
-#include <render_info.h>
 #include <render_technique.h>
 #include <bounding_box.h>
 #include <visitor.h>
@@ -113,7 +112,7 @@ namespace Dental {
 
     virtual BoundingBox boundingBox() const;
 
-    virtual void render(RenderInfo& info);
+    virtual void render();
 
   protected:  
     void computeBounding();
