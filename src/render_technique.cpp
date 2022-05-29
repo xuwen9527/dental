@@ -105,15 +105,18 @@ void main() {
     static const char* vertex_source = R"(#version 300 es
 layout (location = 0) in vec3 aPosition;
 uniform mat4 uMVP;
+out vec4 pos;
 void main() {
-  gl_Position = uMVP * vec4(aPosition, 1.0);
+  pos = uMVP * vec4(aPosition, 1.0);
+  gl_Position = pos;
 })";
 
     static const char* fragment_source = R"(#version 300 es
 precision mediump float;
 out vec4 FragColor;
+in vec4 pos;
 void main() {
-  FragColor = vec4(1.f, 0.f, 0.f, 1.f);
+  FragColor = vec4((pos.xyz + 1.0) * 0.5, 1.f);
 })";
 
     return std::make_shared<Program>(vertex_source, fragment_source);
@@ -131,7 +134,7 @@ out vec3 normal;
 out vec3 frag;
 void main() {
   vec4 depth_pos = uDepthMVP * vec4(aPosition, 1.0);
-  frag = (depth_pos.xyz + 1.0) * 0.5;
+  frag = depth_pos.xyz;
   gl_Position = uMVP * vec4(aPosition, 1.0);
   vec4 ecPos = uMV * vec4(aPosition, 1.0);
   mat3 normal_matrix = mat3(uMV);
@@ -168,16 +171,41 @@ void DirectionalLight(in vec3 normal, in vec3 ecPos,
   diffuse = lightDiffuse * nDotVP;
 }
 void main() {
-  float depth = texture(texture0, frag.xy).r;
-  // float shadow = frag.z < depth + 0.0001 ? 1.0 : 0.0;
-  float shadow = 1.0 - clamp(-(depth + 0.0001 - frag.z) * 20.0, 0.0, 1.0);
+  vec2 texcoord = (frag.xy + 1.0) * 0.5;
+  float depth = texture(texture0, texcoord).z;
+
+  ivec2 size = textureSize(texture0, 0);
+  vec2 offset = vec2(1.0/float(size.x), 1.0/float(size.y));
+
+  float d;
+  d = texture(texture0, texcoord + vec2(-offset.x, -offset.y)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2( offset.x,  offset.y)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2( offset.x, -offset.y)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2(-offset.x,  offset.y)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2(-offset.x,  0.0)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2( offset.x,  0.0)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2( 0,  offset.y)).z;
+  if (depth < d) depth = d;
+  d = texture(texture0, texcoord + vec2( 0, -offset.y)).z;
+  if (depth < d) depth = d;
+
+  depth = depth * 2.0 - 1.0;
+  float shadow = 1.0 - (frag.z - depth);
 
   vec4 ambiCol = vec4(0.0);
   vec4 diffCol = vec4(0.0);
   vec4 specCol = vec4(0.0);
   DirectionalLight(normal, pos, ambiCol, diffCol, specCol);
-  FragColor = vec4(cessnaColor.xyz * shadow * (ambiCol + diffCol + specCol), 1.0);
-  // FragColor = vec4(shadow, shadow, 0.0, 1.0);
+  vec4 color = cessnaColor * (ambiCol + diffCol + specCol);
+  // FragColor = vec4(pow(color.xyz, vec3(1.0/2.2)) * shadow, 1.0);
+  FragColor = vec4(color.xyz * shadow, 1.0);
+  // FragColor = vec4(shadow, shadow, shadow, 1.0);
 })";
 
     return std::make_shared<Program>(vertex_source, fragment_source);
@@ -301,7 +329,7 @@ void main() {
     depth_render_info.viewport(Viewport(0.f, 0.f, (float)frambuffer.width(), (float)frambuffer.height()));
     depth_render_info.mvp(
       mv,
-      glm::ortho(-half_size, half_size, -half_size, half_size, -1000.f, 1000.f));
+      glm::ortho(-half_size, half_size, -half_size, half_size, -half_size, half_size));
 
     uniform_mvp_->value<glm::mat4>(depth_render_info.mvp());
 
@@ -310,7 +338,7 @@ void main() {
     frambuffer.bind();
 
     depth_render_info.viewport().apply();
-    glClearColor(0.f, 1.f, 0.f, 1.f);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     program_->bind();
     program_->bind(depth_render_info.mv(), depth_render_info.mvp());
@@ -331,7 +359,7 @@ void main() {
     uniform_tex_->bind(program_->uniform_location("texture0"));
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frambuffer.depth());
+    glBindTexture(GL_TEXTURE_2D, frambuffer.color());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
