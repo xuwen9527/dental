@@ -143,6 +143,11 @@ void main() {
 })";
 
     static const char* fragment_source = R"(#version 300 es
+// fwidth() is not supported by default on OpenGL ES. Enable it.
+#if defined(GL_OES_standard_derivatives)
+#extension GL_OES_standard_derivatives : enable
+#endif
+
 precision mediump float;
 uniform sampler2D texture0;
 in vec3 pos;
@@ -151,9 +156,9 @@ in vec3 frag;
 out vec4 FragColor;
 const vec3 lightPos      = vec3(0.0, 0.0, 100.0);
 const vec4 cessnaColor   = vec4(1.0, 1.0, 1.0, 1.0);
-const vec4 lightAmbient  = vec4(0.2, 0.2, 0.2, 1.0);
-const vec4 lightDiffuse  = vec4(0.5, 0.5, 0.5, 1.0);
-const vec4 lightSpecular = vec4(0.2, 0.2, 0.2, 1.0);
+const vec4 lightAmbient  = vec4(0.4, 0.4, 0.4, 1.0);
+const vec4 lightDiffuse  = vec4(0.3, 0.3, 0.3, 1.0);
+const vec4 lightSpecular = vec4(0.1, 0.1, 0.1, 1.0);
 void DirectionalLight(in vec3 normal, in vec3 ecPos,
   inout vec4 ambient, inout vec4 diffuse, inout vec4 specular) {
   vec3 lightDir = normalize(lightPos - ecPos);
@@ -161,7 +166,7 @@ void DirectionalLight(in vec3 normal, in vec3 ecPos,
   bool blin = true;
   if (blin) {
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    specular = pow(max(dot(normal, halfwayDir), 0.0), 16.0) * lightSpecular;
+    specular = pow(max(dot(normal, halfwayDir), 0.0), 8.0) * lightSpecular;
   } else {
     vec3 reflectDir = reflect(-lightDir, normal);
     specular = pow(max(dot(viewDir, reflectDir), 0.0), 8.0) * lightSpecular;
@@ -172,29 +177,26 @@ void DirectionalLight(in vec3 normal, in vec3 ecPos,
 }
 void main() {
   vec2 texcoord = (frag.xy + 1.0) * 0.5;
-  float depth = texture(texture0, texcoord).z;
+  float depth = texture(texture0, texcoord).r;
 
   ivec2 size = textureSize(texture0, 0);
   vec2 offset = vec2(1.0/float(size.x), 1.0/float(size.y));
 
-  float d;
-  d = texture(texture0, texcoord + vec2(-offset.x, -offset.y)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2( offset.x,  offset.y)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2( offset.x, -offset.y)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2(-offset.x,  offset.y)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2(-offset.x,  0.0)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2( offset.x,  0.0)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2( 0,  offset.y)).z;
-  if (depth < d) depth = d;
-  d = texture(texture0, texcoord + vec2( 0, -offset.y)).z;
-  if (depth < d) depth = d;
+  float d[4];
+  d[0] = texture(texture0, texcoord + vec2(0.0,  offset.y)).r;
+  d[1] = texture(texture0, texcoord + vec2(0.0, -offset.y)).r;
+  d[2] = texture(texture0, texcoord + vec2( offset.x, 0.0)).r;
+  d[3] = texture(texture0, texcoord + vec2(-offset.x, 0.0)).r;
 
+  float dx = d[2] - d[3];
+  float dy = d[0] - d[1];
+
+  offset = offset * vec2(sign(dx), sign(dy));
+  float near = texture(texture0, texcoord + offset).r;
+  if (near > 0.99) {
+    depth = texture(texture0, texcoord - offset).r;
+  }
+  
   depth = depth * 2.0 - 1.0;
   float shadow = 1.0 - (frag.z - depth);
 
@@ -203,8 +205,8 @@ void main() {
   vec4 specCol = vec4(0.0);
   DirectionalLight(normal, pos, ambiCol, diffCol, specCol);
   vec4 color = cessnaColor * (ambiCol + diffCol + specCol);
-  // FragColor = vec4(pow(color.xyz, vec3(1.0/2.2)) * shadow, 1.0);
-  FragColor = vec4(color.xyz * shadow, 1.0);
+  FragColor = vec4(pow(color.xyz, vec3(1.0/2.2)) * shadow, 1.0);
+  // FragColor = vec4(color.xyz * shadow, 1.0);
   // FragColor = vec4(shadow, shadow, shadow, 1.0);
 })";
 
@@ -359,7 +361,7 @@ void main() {
     uniform_tex_->bind(program_->uniform_location("texture0"));
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frambuffer.color());
+    glBindTexture(GL_TEXTURE_2D, frambuffer.depth());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
