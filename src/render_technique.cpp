@@ -198,14 +198,15 @@ void main() {
   }
   
   depth = depth * 2.0 - 1.0;
-  float shadow = 1.0 - (frag.z - depth);
+  float shadow = clamp(1.0 - (frag.z - depth), 0.0, 1.0);
 
   vec4 ambiCol = vec4(0.0);
   vec4 diffCol = vec4(0.0);
   vec4 specCol = vec4(0.0);
   DirectionalLight(normal, pos, ambiCol, diffCol, specCol);
   vec4 color = cessnaColor * (ambiCol + diffCol + specCol);
-  FragColor = vec4(pow(color.xyz, vec3(1.0/2.2)) * shadow, 1.0);
+  FragColor = vec4(pow(color.xyz, vec3(1.0/2.2)), 1.0);
+  FragColor.gb *= shadow;
   // FragColor = vec4(color.xyz * shadow, 1.0);
   // FragColor = vec4(shadow, shadow, shadow, 1.0);
 })";
@@ -349,7 +350,7 @@ void main() {
     frambuffer.unbind();
 
     info.viewport().apply();
-    frambuffer.blit(0, 0, 400, 400);
+    // frambuffer.blit(0, 0, 400, 400);
   }
 
   void ShadowRenderTechnique::renderShadow(RenderInfo& info, Geometry& geometry) {

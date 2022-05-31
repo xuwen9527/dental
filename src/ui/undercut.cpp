@@ -24,7 +24,26 @@ namespace Dental::UI {
     }
 
     if (ImGui::Begin(Name.c_str(), &Visible)) {
+      ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
+      ImGui::Button("设置就位道");
+      if (ImGui::BeginTable("##", 2, ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableNextRow();
+        {
+          ImGui::TableSetColumnIndex(0);
+          ImGui::Text("Angle");
 
+          static float angle = 0.0f;
+
+          ImGui::TableSetColumnIndex(1);
+          ImGui::SetNextItemWidth(-FLT_MIN);
+          if (ImGui::InputFloat("##", &angle)) {
+          }
+        }
+
+        ImGui::EndTable();
+      }
+      ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
+      ImGui::NewLine();
     }
     ImGui::End();
 
