@@ -1,0 +1,13 @@
+{
+    "files.autoSave": "afterDelay",
+    "editor.detectIndentation": false,
+    "editor.renderWhitespace": "all",
+    "cmake.configureOnOpen": false,
+    "cmake.configureOnEdit": false,
+    "cmake.mingwSearchDirs": [
+        "E:\\msys64\\mingw64"
+    ],
+    "cmake.generator": "MinGW Makefiles",
+    "cmake.parallelJobs": 16,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
