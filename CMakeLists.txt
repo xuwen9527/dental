@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.15)
 project(dental VERSION 0.1.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -27,7 +27,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${runtime_dir})
 
 configure_file(config.in config.h)
 
-set(ROOT "C:/msys64/mingw64/include")
+set(ROOT "E:/msys64/mingw64/include")
 
 include_directories(${ROOT})
 include_directories(thirdparty)
@@ -39,7 +39,7 @@ file(GLOB_RECURSE INCS include/*.h)
 file(GLOB_RECURSE SRCS src/*.cpp src/*.c src/*.h)
 add_executable(${PROJECT_NAME} ${INCS} ${SRCS})
 
-target_link_libraries(${PROJECT_NAME} glfw3 GLESv2)
+target_link_libraries(${PROJECT_NAME} glfw3 )
 #target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_ES2)
 
 build_command(BUILD_COMMAND_LINE CONFIGURATION ${CMAKE_BUILD_TYPE} TARGET ALL_BUILD)

@@ -143,11 +143,6 @@ void main() {
 })";
 
     static const char* fragment_source = R"(#version 300 es
-// fwidth() is not supported by default on OpenGL ES. Enable it.
-#if defined(GL_OES_standard_derivatives)
-#extension GL_OES_standard_derivatives : enable
-#endif
-
 precision mediump float;
 uniform sampler2D texture0;
 in vec3 pos;
@@ -177,8 +172,8 @@ void DirectionalLight(in vec3 normal, in vec3 ecPos,
 }
 void main() {
   vec2 texcoord = (frag.xy + 1.0) * 0.5;
-  float depth = texture(texture0, texcoord).r;
 
+  float depth = texture(texture0, texcoord).r;
   ivec2 size = textureSize(texture0, 0);
   vec2 offset = vec2(1.0/float(size.x), 1.0/float(size.y));
 
