@@ -196,7 +196,7 @@ void main() {
   if (near > 0.99) {
     depth = texture(texture0, texcoord - offset).r;
   }
-  
+
   depth = depth * 2.0 - 1.0;
   float shadow = clamp(1.0 - (frag.z - depth), 0.0, 1.0);
 
@@ -311,11 +311,14 @@ void main() {
     RenderTechnique::apply(info, geometry);
   }
 
-  ShadowRenderTechnique::ShadowRenderTechnique() : RenderTechnique("Shadow"), size_(1024) {
-      uniform_tex_ = std::make_shared<UniformInt>("texture0", 0);
-      uniform_mvp_ = std::make_shared<UniformMat4>("uDepthMVP", glm::identity<glm::mat4>());
-      frambuffer.resize(size_, size_);
-      frambuffer.attachColor();
+  ShadowRenderTechnique::ShadowRenderTechnique() :
+    RenderTechnique("Shadow"), 
+    size_(1024),
+    mv_(glm::identity<glm::mat4>()) {
+    uniform_tex_ = std::make_shared<UniformInt>("texture0", 0);
+    uniform_mvp_ = std::make_shared<UniformMat4>("uDepthMVP", glm::identity<glm::mat4>());
+    frambuffer.resize(size_, size_);
+    frambuffer.attachColor();
   }
 
   void ShadowRenderTechnique::renderDepth(RenderInfo& info, Geometry& geometry) {
@@ -327,6 +330,8 @@ void main() {
 
     auto mv = glm::lookAt(glm::vec3(center.x, center.y, center.z + sphere.radius()), center, glm::vec3(0.f, 1.f, 0.f));
     mv *= glm::scale(mv, glm::vec3(half_size / radius, half_size / radius, half_size / radius));
+
+    mv *= mv_;
 
     RenderInfo depth_render_info;
     depth_render_info.viewport(Viewport(0.f, 0.f, (float)frambuffer.width(), (float)frambuffer.height()));

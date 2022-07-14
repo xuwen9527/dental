@@ -1,6 +1,7 @@
 #include "../external/imgui/imgui.h"
 #include <ui/undercut.h>
 #include <engine.h>
+#include <glm/gtx/euler_angles.hpp>
 
 namespace Dental::UI {
   UnderCut::UnderCut(Engine& engine, const std::string& name, bool visible) :
@@ -23,20 +24,55 @@ namespace Dental::UI {
       return;
     }
 
+    if (!geometry_) {
+      auto geom = engine_.viewer()->scene()->geometry(0);
+      if (geom) {
+        ShadowRenderTechniquePtr render = std::dynamic_pointer_cast<ShadowRenderTechnique>(geom->renderTechnique());
+        if (render) {
+          geometry(geom);
+        }
+      }
+    }
+
     if (ImGui::Begin(Name.c_str(), &Visible)) {
       ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
-      ImGui::Button("设置就位道");
-      if (ImGui::BeginTable("##", 2, ImGuiTableFlags_SizingStretchProp)) {
+      if (ImGui::BeginTable("##undercut_table", 2, ImGuiTableFlags_SizingStretchProp)) {
+        static glm::vec3 angle(0.f, 0.f, 0.f);
+        if (geometry_) {
+          ShadowRenderTechniquePtr render = std::dynamic_pointer_cast<ShadowRenderTechnique>(geometry_->renderTechnique());
+          glm::mat4& mv = render->mv();
+          glm::extractEulerAngleXYZ(mv, angle.x, angle.y, angle.z);
+          angle = glm::degrees(angle);
+        }
+
         ImGui::TableNextRow();
         {
           ImGui::TableSetColumnIndex(0);
-          ImGui::Text("Angle");
-
-          static float angle = 0.0f;
-
+          ImGui::Text("horizontal");
           ImGui::TableSetColumnIndex(1);
           ImGui::SetNextItemWidth(-FLT_MIN);
-          if (ImGui::InputFloat("##", &angle)) {
+          if (ImGui::DragFloat("##undercut_horizontal", &angle.x, 0.01f)) {
+            if (geometry_) {
+              angle = glm::radians(angle);
+              glm::quat rotate = glm::quat_cast(glm::eulerAngleXYZ(angle.x, angle.y, angle.z));
+              ShadowRenderTechniquePtr render = std::dynamic_pointer_cast<ShadowRenderTechnique>(geometry_->renderTechnique());
+              render->mv() = glm::mat4_cast(rotate);
+            }
+          }
+        }
+        ImGui::TableNextRow();
+        {
+          ImGui::TableSetColumnIndex(0);
+          ImGui::Text("vertical");
+          ImGui::TableSetColumnIndex(1);
+          ImGui::SetNextItemWidth(-FLT_MIN);
+          if (ImGui::DragFloat("##undercut_vertical", &angle.y, 0.01f)) {
+            if (geometry_) {
+              angle = glm::radians(angle);
+              glm::quat rotate = glm::quat_cast(glm::eulerAngleXYZ(angle.x, angle.y, angle.z));
+              ShadowRenderTechniquePtr render = std::dynamic_pointer_cast<ShadowRenderTechnique>(geometry_->renderTechnique());
+              render->mv() = glm::mat4_cast(rotate);
+            }
           }
         }
 
@@ -46,10 +82,6 @@ namespace Dental::UI {
       ImGui::NewLine();
     }
     ImGui::End();
-
-    if (!geometry_) {
-      geometry(engine_.viewer()->scene()->geometry(0));
-    }
 
     if (geometry_) {
       auto& viewport = engine_.viewer()->scene()->viewport();

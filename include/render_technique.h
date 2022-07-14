@@ -91,6 +91,8 @@ namespace Dental {
 
     void apply(RenderInfo& info, Geometry& geometry) override;
 
+    glm::mat4& mv() { return mv_; }
+
   private:
     void renderDepth(RenderInfo& info, Geometry& geometry);
     void renderShadow(RenderInfo& info, Geometry& geometry);
@@ -99,6 +101,8 @@ namespace Dental {
 
     UniformPtr uniform_tex_;
     UniformPtr uniform_mvp_;
+
+    glm::mat4 mv_;
 
     int size_;
   };
